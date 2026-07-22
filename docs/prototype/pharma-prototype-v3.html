@@ -1,0 +1,1998 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RM Receiving System v3</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f5f5f3;--surface:#fff;--surface2:#f9f9f8;--border:#e8e8e5;--border2:#d4d4cf;
+  --text:#1a1a18;--text2:#5a5a55;--text3:#9a9a94;
+  --accent:#2d6a4f;--accent-light:#e8f4ee;--accent-hover:#235c43;
+  --danger:#c0392b;--danger-light:#fdf0ee;
+  --warning:#b7791f;--warning-light:#fef9ec;
+  --info:#2563a8;--info-light:#eff4fb;
+  --purple:#6d28d9;--purple-light:#ede9fe;
+  --radius:8px;--radius-lg:12px;
+  --shadow:0 1px 3px rgba(0,0,0,.08),0 1px 2px rgba(0,0,0,.04);
+  --shadow-md:0 4px 12px rgba(0,0,0,.08),0 2px 4px rgba(0,0,0,.04);
+  --shadow-lg:0 12px 32px rgba(0,0,0,.10),0 4px 8px rgba(0,0,0,.06);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);font-size:14px;line-height:1.5;min-height:100vh}
+::-webkit-scrollbar{width:6px;height:6px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--border2);border-radius:99px}
+
+/* ── LOGIN ── */
+#loginScreen{min-height:100vh;display:flex;align-items:center;justify-content:center}
+.login-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);box-shadow:var(--shadow-lg);padding:44px 40px;width:440px;text-align:center}
+.login-logo{width:48px;height:48px;background:var(--accent);border-radius:12px;display:flex;align-items:center;justify-content:center;margin:0 auto 18px}
+.login-title{font-size:20px;font-weight:600;margin-bottom:4px}
+.login-sub{font-size:13px;color:var(--text3);margin-bottom:28px}
+.login-label{font-size:11px;font-weight:600;color:var(--text3);text-align:left;margin-bottom:10px;letter-spacing:.06em;text-transform:uppercase}
+.role-cards{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:24px}
+.role-card{display:flex;align-items:center;gap:11px;padding:13px;border:1.5px solid var(--border);border-radius:var(--radius);cursor:pointer;transition:all .15s;text-align:left;background:var(--surface)}
+.role-card:hover,.role-card.selected{border-color:var(--accent);background:var(--accent-light)}
+.role-icon{width:34px;height:34px;border-radius:7px;background:var(--border);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:16px}
+.role-name{font-weight:600;font-size:13px}
+.role-desc{font-size:11px;color:var(--text3);line-height:1.3}
+.btn-login{width:100%;padding:12px;background:var(--accent);color:#fff;border:none;border-radius:var(--radius);font-family:inherit;font-size:14px;font-weight:500;cursor:pointer;transition:background .15s}
+.btn-login:hover{background:var(--accent-hover)}
+.btn-login:disabled{background:var(--border2);color:var(--text3);cursor:not-allowed}
+
+/* ── SHELL ── */
+#appShell{display:none;min-height:100vh}
+.topbar{height:56px;background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 24px;gap:14px;position:sticky;top:0;z-index:100}
+.topbar-brand{display:flex;align-items:center;gap:10px;font-weight:600;font-size:15px}
+.topbar-logo{width:28px;height:28px;background:var(--accent);border-radius:6px;display:flex;align-items:center;justify-content:center}
+.topbar-spacer{flex:1}
+.topbar-role{padding:5px 12px;background:var(--accent-light);border-radius:99px;font-size:12px;font-weight:500;color:var(--accent)}
+.notif-bell{position:relative;cursor:pointer;padding:6px;border-radius:var(--radius);transition:background .15s}
+.notif-bell:hover{background:var(--bg)}
+.notif-dot{position:absolute;top:4px;right:4px;width:8px;height:8px;background:var(--danger);border-radius:50%;border:2px solid white;display:none}
+.notif-dot.show{display:block}
+.btn-logout{padding:6px 14px;border:1px solid var(--border2);border-radius:var(--radius);background:var(--surface);font-family:inherit;font-size:13px;color:var(--text2);cursor:pointer;transition:all .15s}
+.btn-logout:hover{border-color:var(--danger);color:var(--danger)}
+
+/* ── TABS ── */
+.tab-bar{display:flex;gap:2px;padding:0 32px;background:var(--surface);border-bottom:1px solid var(--border);overflow-x:auto}
+.tab-btn{padding:14px 18px;font-family:inherit;font-size:13px;font-weight:500;color:var(--text3);background:transparent;border:none;border-bottom:2px solid transparent;cursor:pointer;transition:all .15s;display:flex;align-items:center;gap:7px;white-space:nowrap}
+.tab-btn:hover{color:var(--text)}
+.tab-btn.active{color:var(--accent);border-bottom-color:var(--accent)}
+.tab-badge{background:var(--info);color:#fff;font-size:10px;font-weight:600;padding:1px 6px;border-radius:99px;min-width:18px;text-align:center}
+
+/* ── ANALYST LAUNCHER ── */
+.analyst-home{display:flex;align-items:center;justify-content:center;min-height:calc(100vh - 56px)}
+.analyst-launcher{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;max-width:700px;width:100%;padding:32px}
+.launch-card{background:var(--surface);border:1.5px solid var(--border);border-radius:var(--radius-lg);padding:32px 24px;text-align:center;cursor:pointer;transition:all .2s;box-shadow:var(--shadow)}
+.launch-card:hover{border-color:var(--accent);box-shadow:var(--shadow-md);transform:translateY(-2px)}
+.launch-icon{font-size:36px;margin-bottom:14px}
+.launch-title{font-size:15px;font-weight:600;margin-bottom:4px}
+.launch-sub{font-size:12px;color:var(--text3)}
+.launch-badge{display:inline-block;margin-top:10px;background:var(--info-light);color:var(--info);font-size:11px;font-weight:600;padding:2px 10px;border-radius:99px}
+
+/* ── MAIN ── */
+.main-content{padding:28px 32px;max-width:1400px;margin:0 auto}
+.page-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;flex-wrap:wrap;gap:12px}
+.page-title{font-size:20px;font-weight:600}
+.page-sub{font-size:13px;color:var(--text3);margin-top:2px}
+.back-btn{display:inline-flex;align-items:center;gap:6px;font-size:13px;color:var(--text3);cursor:pointer;margin-bottom:16px;transition:color .15s}
+.back-btn:hover{color:var(--accent)}
+
+/* ── BUTTONS ── */
+.btn{display:inline-flex;align-items:center;gap:7px;padding:9px 16px;border-radius:var(--radius);font-family:inherit;font-size:13px;font-weight:500;cursor:pointer;transition:all .15s;border:none}
+.btn-primary{background:var(--accent);color:#fff}.btn-primary:hover{background:var(--accent-hover)}
+.btn-secondary{background:var(--surface);color:var(--text);border:1px solid var(--border2)}.btn-secondary:hover{border-color:var(--accent);color:var(--accent)}
+.btn-info{background:var(--info);color:#fff}.btn-info:hover{background:#1d54a0}
+.btn-warning{background:var(--warning);color:#fff}.btn-warning:hover{background:#a06117}
+.btn-danger{background:var(--danger);color:#fff}.btn-danger:hover{background:#a93226}
+.btn-purple{background:var(--purple);color:#fff}.btn-purple:hover{background:#5b21b6}
+.btn-sm{padding:5px 10px;font-size:12px}
+.btn-icon{width:28px;height:28px;padding:0;display:inline-flex;align-items:center;justify-content:center;border-radius:6px;background:var(--surface2);border:1px solid var(--border);cursor:pointer;font-size:13px;transition:all .15s;color:var(--text2)}
+.btn-icon:hover{background:var(--accent-light);border-color:var(--accent);color:var(--accent)}
+.btn:disabled,.btn[disabled]{opacity:.45;cursor:not-allowed;pointer-events:none}
+
+/* ── STATS ── */
+.stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:24px}
+.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:18px 20px;box-shadow:var(--shadow)}
+.stat-label{font-size:12px;color:var(--text3);font-weight:500;text-transform:uppercase;letter-spacing:.04em;margin-bottom:6px}
+.stat-value{font-size:26px;font-weight:600;font-family:'DM Mono',monospace}
+.stat-sub{font-size:12px;color:var(--text3);margin-top:3px}
+
+/* ── PENDING BANNER ── */
+.pending-banner{display:flex;align-items:center;gap:20px;background:var(--info-light);border:1px solid #bfd4ec;border-radius:var(--radius);padding:20px 24px;margin-bottom:24px}
+.pending-banner-num{font-size:42px;font-weight:700;font-family:'DM Mono',monospace;color:var(--info);line-height:1;flex-shrink:0}
+.pending-banner-label{font-size:14px;color:var(--info);font-weight:600}
+.pending-banner-sub{font-size:12px;color:var(--text3);margin-top:3px}
+
+/* ── NOTIFICATION BANNER ── */
+.notif-banner{background:var(--accent-light);border:1px solid #a8d5bc;border-radius:var(--radius);padding:14px 18px;margin-bottom:20px;display:flex;align-items:center;gap:12px;cursor:pointer}
+.notif-banner-icon{font-size:18px;flex-shrink:0}
+.notif-banner-text{font-size:13px;color:var(--accent);font-weight:500}
+.notif-banner-sub{font-size:12px;color:var(--text2)}
+.notif-banner-close{margin-left:auto;font-size:16px;color:var(--text3);cursor:pointer;padding:2px 6px}
+
+/* ── TABLE ── */
+.table-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);box-shadow:var(--shadow);overflow:hidden}
+.table-toolbar{display:flex;align-items:center;gap:12px;padding:14px 18px;border-bottom:1px solid var(--border);flex-wrap:wrap}
+.search-box{display:flex;align-items:center;gap:8px;padding:7px 12px;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);flex:1;max-width:300px}
+.search-box input{border:none;background:transparent;font-family:inherit;font-size:13px;color:var(--text);outline:none;width:100%}
+.search-box input::placeholder{color:var(--text3)}
+.filter-select{padding:7px 12px;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);font-family:inherit;font-size:13px;color:var(--text);cursor:pointer;outline:none}
+.table-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse}
+thead tr{background:var(--surface2)}
+th{padding:10px 14px;text-align:left;font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;border-bottom:1px solid var(--border);white-space:nowrap}
+td{padding:10px 14px;border-bottom:1px solid var(--border);font-size:13px;vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tbody tr:hover{background:var(--surface2)}
+.mono{font-family:'DM Mono',monospace;font-size:12px}
+
+/* ── BADGES ── */
+.badge{display:inline-flex;align-items:center;gap:5px;padding:3px 9px;border-radius:99px;font-size:11px;font-weight:500;white-space:nowrap}
+.badge-dot{width:5px;height:5px;border-radius:50%;flex-shrink:0}
+.badge-quarantine{background:var(--warning-light);color:var(--warning)}.badge-quarantine .badge-dot{background:var(--warning)}
+.badge-released{background:var(--accent-light);color:var(--accent)}.badge-released .badge-dot{background:var(--accent)}
+.badge-rejected{background:var(--danger-light);color:var(--danger)}.badge-rejected .badge-dot{background:var(--danger)}
+.badge-notsampled{background:var(--surface2);color:var(--text3);border:1px solid var(--border)}.badge-notsampled .badge-dot{background:var(--text3)}
+.badge-requested{background:var(--info-light);color:var(--info)}.badge-requested .badge-dot{background:var(--info)}
+.badge-sampled{background:var(--accent-light);color:var(--accent)}.badge-sampled .badge-dot{background:var(--accent)}
+.badge-nottested{background:var(--surface2);color:var(--text3);border:1px solid var(--border)}.badge-nottested .badge-dot{background:var(--text3)}
+.badge-intesting{background:var(--info-light);color:var(--info)}.badge-intesting .badge-dot{background:var(--info)}
+.badge-completed{background:#fdf4e7;color:#92400e}.badge-completed .badge-dot{background:#92400e}
+.badge-approved{background:var(--accent-light);color:var(--accent)}.badge-approved .badge-dot{background:var(--accent)}
+.badge-draft{background:var(--surface2);color:var(--text3);border:1px solid var(--border)}.badge-draft .badge-dot{background:var(--text3)}
+.badge-inprogress{background:var(--info-light);color:var(--info)}.badge-inprogress .badge-dot{background:var(--info)}
+.badge-purple{background:var(--purple-light);color:var(--purple)}.badge-purple .badge-dot{background:var(--purple)}
+
+/* ── MODAL ── */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.38);z-index:200;display:flex;align-items:center;justify-content:center;padding:20px;opacity:0;pointer-events:none;transition:opacity .2s}
+.overlay.open{opacity:1;pointer-events:all}
+.modal{background:var(--surface);border-radius:var(--radius-lg);box-shadow:var(--shadow-lg);width:100%;max-width:820px;max-height:92vh;display:flex;flex-direction:column;transform:translateY(12px);transition:transform .2s;overflow:hidden}
+.overlay.open .modal{transform:translateY(0)}
+.modal-sm{max-width:480px}.modal-md{max-width:640px}.modal-lg{max-width:900px}
+.modal-header{padding:18px 24px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.modal-title{font-size:16px;font-weight:600}
+.modal-sub{font-size:12px;color:var(--text3);margin-top:2px}
+.modal-close{width:30px;height:30px;border:none;background:var(--bg);border-radius:6px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--text2);font-size:16px;transition:all .15s}
+.modal-close:hover{background:var(--danger-light);color:var(--danger)}
+.modal-body{padding:22px 24px;overflow-y:auto;flex:1}
+.modal-footer{padding:14px 24px;border-top:1px solid var(--border);display:flex;align-items:center;justify-content:flex-end;gap:10px;flex-shrink:0}
+
+/* ── FORMS ── */
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px 20px}
+.form-full{grid-column:1/-1}
+.fsec{font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;padding-bottom:8px;border-bottom:1px solid var(--border);margin-bottom:2px;grid-column:1/-1}
+.form-group{display:flex;flex-direction:column;gap:5px}
+label{font-size:12px;font-weight:500;color:var(--text2)}
+.input-row{display:flex;gap:6px}
+.input-row select,.input-row input{flex:1;min-width:0}
+input,select,textarea{padding:8px 10px;border:1px solid var(--border2);border-radius:var(--radius);font-family:inherit;font-size:13px;color:var(--text);background:var(--surface);outline:none;transition:border-color .15s;width:100%}
+input:focus,select:focus,textarea:focus{border-color:var(--accent)}
+input[readonly]{background:var(--surface2);color:var(--text2);cursor:default}
+textarea{resize:vertical;min-height:64px}
+
+/* ── DETAIL VIEW ── */
+.detail-section{background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);padding:14px 18px;margin-bottom:14px}
+.detail-section-title{font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:12px;padding-bottom:7px;border-bottom:1px solid var(--border)}
+.detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px 22px}
+.detail-key{font-size:11px;color:var(--text3);font-weight:500;text-transform:uppercase;letter-spacing:.04em;margin-bottom:2px}
+.detail-val{font-size:13px;color:var(--text);font-weight:500}
+
+/* ── CONFIRM ── */
+.confirm-info{background:var(--info-light);border:1px solid #bfd4ec;border-radius:var(--radius);padding:14px 16px;margin-bottom:14px}
+.confirm-row{display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid rgba(0,0,0,.05);font-size:13px}
+.confirm-row:last-child{border-bottom:none}
+.confirm-row span:first-child{color:var(--text3)}
+.confirm-row span:last-child{font-weight:500}
+.confirm-note{font-size:12px;color:var(--text3);line-height:1.6}
+
+/* ── ADD OPTION ── */
+.add-option-box{display:none;position:fixed;z-index:400;background:var(--surface);border:1px solid var(--border2);border-radius:var(--radius);box-shadow:var(--shadow-md);padding:12px 14px;width:260px}
+.add-option-box.open{display:block}
+.add-option-label{font-size:12px;font-weight:500;color:var(--text2);margin-bottom:7px}
+.add-option-row{display:flex;gap:6px}
+.add-option-row input{flex:1}
+.add-option-row button{padding:7px 10px;background:var(--accent);color:#fff;border:none;border-radius:var(--radius);font-size:12px;font-weight:500;cursor:pointer;font-family:inherit}
+
+/* ── LABELS ── */
+.label-wrap{display:flex;gap:18px;flex-wrap:wrap}
+.label-card{flex:1;min-width:250px;border:1.5px solid var(--border2);border-radius:var(--radius);overflow:hidden}
+.label-card-hdr{padding:8px 13px;font-size:11px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:#fff;display:flex;align-items:center;gap:8px}
+.hdr-sample{background:var(--accent)}.hdr-container{background:var(--info)}.hdr-release{background:var(--purple)}
+.label-body{padding:13px;font-family:'DM Mono',monospace;font-size:11px;line-height:1.85;background:#fff}
+.lrow{display:flex;gap:6px}
+.lkey{color:var(--text3);min-width:130px;flex-shrink:0}
+.lval{color:var(--text);font-weight:600}
+.ldivider{border:none;border-top:1px dashed var(--border2);margin:7px 0}
+.ltitle{font-size:12px;font-weight:700;text-align:center;letter-spacing:.08em;text-transform:uppercase;margin-bottom:9px;padding-bottom:7px;border-bottom:1px solid var(--border)}
+
+/* ── COA VIEW ── */
+.coa-header{background:var(--accent);color:#fff;padding:20px 24px;border-radius:var(--radius) var(--radius) 0 0;margin:-22px -24px 20px}
+.coa-title{font-size:16px;font-weight:700;letter-spacing:.04em}
+.coa-sub{font-size:12px;opacity:.8;margin-top:3px}
+.coa-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px 24px;margin-bottom:16px}
+.coa-section-title{font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin:16px 0 10px;padding-bottom:6px;border-bottom:1px solid var(--border);grid-column:1/-1}
+.coa-key{font-size:11px;color:var(--text3);font-weight:500;text-transform:uppercase;letter-spacing:.03em;margin-bottom:2px}
+.coa-val{font-size:13px;font-weight:500;color:var(--text)}
+.coa-badge-row{display:flex;align-items:center;justify-content:space-between;margin-top:8px;padding-top:12px;border-top:1px solid var(--border)}
+
+/* ── APPROVE/REJECT ACTIONS ── */
+.action-bar{display:flex;align-items:center;gap:10px;padding:14px 18px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:16px}
+.action-bar-label{font-size:13px;font-weight:500;flex:1}
+
+/* ── RELEASE MODAL ── */
+.release-highlight{background:var(--accent-light);border:1px solid #a8d5bc;border-radius:var(--radius);padding:14px 18px;margin-bottom:14px}
+.release-qc-row{display:flex;align-items:center;gap:12px;margin-top:10px}
+.release-qc-row input{flex:1}
+
+/* ── EMPTY STATE ── */
+.empty-state{text-align:center;padding:56px 20px;color:var(--text3)}
+.empty-icon{font-size:38px;margin-bottom:12px;opacity:.5}
+.empty-title{font-size:15px;font-weight:500;color:var(--text2);margin-bottom:5px}
+.empty-sub{font-size:13px}
+
+/* ── TOAST ── */
+.toast-container{position:fixed;bottom:24px;right:24px;z-index:999;display:flex;flex-direction:column;gap:8px}
+.toast{background:var(--text);color:#fff;padding:11px 16px;border-radius:var(--radius);font-size:13px;box-shadow:var(--shadow-md);display:flex;align-items:center;gap:10px;animation:slideUp .2s ease;max-width:320px}
+.toast.success{background:var(--accent)}.toast.error{background:var(--danger)}.toast.info{background:var(--info)}.toast.warning{background:var(--warning)}
+@keyframes slideUp{from{transform:translateY(12px);opacity:0}to{transform:translateY(0);opacity:1}}
+.action-group{display:flex;gap:5px;align-items:center;flex-wrap:wrap}
+
+
+/* ── CHECKBOX GROUP ── */
+.checkbox-group{display:flex;flex-wrap:wrap;gap:8px 16px;margin-top:2px}
+.checkbox-group label{display:flex;align-items:center;gap:6px;font-size:13px;font-weight:400;color:var(--text);cursor:pointer}
+.checkbox-group input[type=checkbox]{width:15px;height:15px;accent-color:var(--accent);cursor:pointer;flex-shrink:0}
+.badge-packaging{background:#fdf0fe;color:#7e22ce;border:1px solid #e9d5ff}.badge-packaging .badge-dot{background:#7e22ce}
+.badge-fp{background:#fef3c7;color:#92400e}.badge-fp .badge-dot{background:#d97706}
+.badge-sfp{background:#e0f2fe;color:#0369a1}.badge-sfp .badge-dot{background:#0ea5e9}
+.badge-bulk{background:#f0fdf4;color:#166534;border:1px solid #bbf7d0}.badge-bulk .badge-dot{background:#16a34a}
+.badge-pkgreq{background:var(--purple-light);color:var(--purple)}.badge-pkgreq .badge-dot{background:var(--purple)}
+
+
+@media print{body *{visibility:hidden}#printArea,#printArea *{visibility:visible}#printArea{position:fixed;inset:0;padding:30px;background:#fff}}
+@media(max-width:900px){.stats-row{grid-template-columns:1fr 1fr}.form-grid{grid-template-columns:1fr}.main-content{padding:16px}.analyst-launcher{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════ LOGIN ═══════════════════ -->
+<div id="loginScreen">
+  <div class="login-card">
+    <div class="login-logo">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><path d="M9 3H5a2 2 0 0 0-2 2v4m6-6h10a2 2 0 0 1 2 2v4M9 3v18m0 0h10a2 2 0 0 0 2-2V9M9 21H5a2 2 0 0 1-2-2V9m0 0h18"/></svg>
+    </div>
+    <div class="login-title">RM Receiving System</div>
+    <div class="login-sub">Raw Material Receiving &amp; Sampling · GMP Prototype</div>
+    <div class="login-label">Select Your Role</div>
+    <div class="role-cards">
+      <div class="role-card" onclick="selectRole('storekeeper')" id="roleCard_storekeeper">
+        <div class="role-icon">📦</div>
+        <div><div class="role-name">Storekeeper</div><div class="role-desc">Register &amp; manage materials</div></div>
+      </div>
+      <div class="role-card" onclick="selectRole('sampler')" id="roleCard_sampler">
+        <div class="role-icon">🔬</div>
+        <div><div class="role-name">Sampler</div><div class="role-desc">Sampling requests &amp; labels</div></div>
+      </div>
+      <div class="role-card" onclick="selectRole('analyst')" id="roleCard_analyst">
+        <div class="role-icon">🧪</div>
+        <div><div class="role-name">Analyst</div><div class="role-desc">Testing &amp; certificates</div></div>
+      </div>
+      <div class="role-card" onclick="selectRole('qcmanager')" id="roleCard_qcmanager">
+        <div class="role-icon">✅</div>
+        <div><div class="role-name">QC Manager</div><div class="role-desc">Approve COAs &amp; release</div></div>
+      </div>
+    </div>
+    <button class="btn-login" id="loginBtn" onclick="doLogin()" disabled>Select a role to continue</button>
+  </div>
+</div>
+
+<!-- ═══════════════════ APP SHELL ═══════════════════ -->
+<div id="appShell">
+  <div class="topbar">
+    <div class="topbar-brand">
+      <div class="topbar-logo">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><path d="M9 3H5a2 2 0 0 0-2 2v4m6-6h10a2 2 0 0 1 2 2v4M9 3v18m0 0h10a2 2 0 0 0 2-2V9M9 21H5a2 2 0 0 1-2-2V9m0 0h18"/></svg>
+      </div>RM Receiving System
+    </div>
+    <div class="topbar-spacer"></div>
+    <div class="topbar-role" id="topbarRole">— Role —</div>
+    <!-- Notification bell (SK only) -->
+    <div class="notif-bell" id="notifBell" style="display:none" onclick="showNotifPanel()" title="Notifications">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+      <div class="notif-dot" id="notifDot"></div>
+    </div>
+    <button class="btn-logout" onclick="doLogout()">Logout</button>
+  </div>
+
+  <!-- Tab bars (per role) -->
+  <div class="tab-bar" id="skTabBar" style="display:none">
+    <button class="tab-btn active" id="sktab_materials" onclick="switchSKTab('materials')">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 3H5a2 2 0 0 0-2 2v4m6-6h10a2 2 0 0 1 2 2v4M9 3v18m0 0h10a2 2 0 0 0 2-2V9M9 21H5a2 2 0 0 1-2-2V9m0 0h18"/></svg>
+      Raw Materials
+    </button>
+    <button class="tab-btn" id="sktab_packaging" onclick="switchSKTab('packaging')">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
+      Packaging
+    </button>
+  </div>
+
+  <div class="tab-bar" id="samplerTabBar" style="display:none">
+    <button class="tab-btn active" id="tab_requests" onclick="switchSMTab('requests')">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+      Sampling Requests <span class="tab-badge" id="pendingBadge">0</span>
+    </button>
+    <button class="tab-btn" id="tab_history" onclick="switchSMTab('history')">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+      Sample History
+    </button>
+    <button class="tab-btn" id="tab_fpsamples" onclick="switchSMTab('fpsamples')">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 3H5a2 2 0 0 0-2 2v4"/><path d="M15 3h4a2 2 0 0 1 2 2v4"/><path d="M9 21H5a2 2 0 0 1-2-2v-4"/><path d="M15 21h4a2 2 0 0 0 2-2v-4"/></svg>
+      Product Samples
+    </button>
+    <button class="tab-btn" id="tab_prodhistory" onclick="switchSMTab('prodhistory')">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+      Product Sample History
+    </button>
+  </div>
+
+  <!-- ═══ STOREKEEPER ═══ -->
+  <div id="skModule" style="display:none">
+    <!-- MATERIALS TAB -->
+    <div id="skMatPanel">
+      <div class="main-content">
+        <div id="skNotifArea"></div>
+        <div class="page-header">
+          <div><div class="page-title">Raw Materials</div><div class="page-sub">All registered raw materials</div></div>
+          <button class="btn btn-primary" onclick="openRegisterModal()">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Register Material
+          </button>
+        </div>
+        <div class="stats-row" id="skStats"></div>
+        <div class="table-card">
+          <div class="table-toolbar">
+            <div class="search-box"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#9a9a94" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><input type="text" placeholder="Search materials…" oninput="renderSKTable()" id="skSearch"></div>
+            <select class="filter-select" id="skStatusFilter" onchange="renderSKTable()"><option value="">All Statuses</option><option>Quarantine</option><option>Released</option><option>Rejected</option></select>
+            <select class="filter-select" id="skSamplingFilter" onchange="renderSKTable()"><option value="">All Sampling</option><option>Not Sampled</option><option>Sampling Requested</option><option>Sampled</option></select>
+          </div>
+          <div class="table-wrap"><table><thead><tr>
+            <th>Receipt ID</th><th>Material Name</th><th>Sup. Batch No.</th><th>Receiving Date</th><th>Total Qty</th><th>Status</th><th>Sampling Status</th><th>Expire Date</th><th style="width:90px">Actions</th>
+          </tr></thead><tbody id="skTableBody"></tbody></table></div>
+          <div id="skEmpty" style="display:none"><div class="empty-state"><div class="empty-icon">📋</div><div class="empty-title">No materials registered yet</div><div class="empty-sub">Click "Register Material" to get started.</div></div></div>
+        </div>
+      </div>
+    </div>
+    <!-- PACKAGING TAB -->
+    <div id="skPkgPanel" style="display:none">
+      <div class="main-content">
+        <div class="page-header">
+          <div><div class="page-title">Packaging</div><div class="page-sub">All registered packaging materials</div></div>
+          <button class="btn btn-primary" onclick="openPkgModal()">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Register Packaging
+          </button>
+        </div>
+        <div class="stats-row" id="pkgStats"></div>
+        <div class="table-card">
+          <div class="table-toolbar">
+            <div class="search-box"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#9a9a94" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><input type="text" placeholder="Search packaging…" oninput="renderPkgTable()" id="pkgSearch"></div>
+            <select class="filter-select" id="pkgTypeFilter" onchange="renderPkgTable()"><option value="">All Types</option><option>Primary</option><option>Secondary</option><option>Tertiary</option><option>Labeling</option><option>Other</option></select>
+          </div>
+          <div class="table-wrap"><table><thead><tr>
+            <th>Receipt ID</th><th>Name</th><th>Type</th><th>Description</th><th>Qty</th><th>Unit</th><th>Supplier</th><th>Receipt Date</th><th>Recipient</th><th>Warehouse</th><th>Sampling</th><th style="width:120px">Actions</th>
+          </tr></thead><tbody id="pkgTableBody"></tbody></table></div>
+          <div id="pkgEmpty" style="display:none"><div class="empty-state"><div class="empty-icon">📦</div><div class="empty-title">No packaging registered yet</div><div class="empty-sub">Click "Register Packaging" to get started.</div></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ SAMPLER – REQUESTS ═══ -->
+  <div id="smRequests" style="display:none">
+    <div class="main-content">
+      <div class="page-header"><div><div class="page-title">Sampling Requests</div><div class="page-sub">Materials awaiting sampling action</div></div></div>
+      <div class="pending-banner"><div class="pending-banner-num" id="smPendingNum">0</div><div><div class="pending-banner-label">Total Pending Sampling Requests</div><div class="pending-banner-sub">Materials with "Sampling Requested" status require your action</div></div></div>
+      <div class="table-card">
+        <div class="table-toolbar">
+          <div class="search-box"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#9a9a94" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><input type="text" placeholder="Search…" oninput="renderSMTable()" id="smSearch"></div>
+          <select class="filter-select" id="smViewFilter" onchange="renderSMTable()"><option value="Sampling Requested">Pending Only</option><option value="">View All</option></select>
+        </div>
+        <div class="table-wrap"><table><thead><tr>
+          <th>Receipt ID</th><th>Material Name</th><th>Sup. Batch No.</th><th>Receiving Date</th><th>Total Qty</th><th>Status</th><th>Sampling Status</th><th>Expire Date</th><th>No. Containers</th><th style="width:140px">Actions</th>
+        </tr></thead><tbody id="smTableBody"></tbody></table></div>
+        <div id="smEmpty" style="display:none"><div class="empty-state"><div class="empty-icon">🔬</div><div class="empty-title">No sampling requests</div><div class="empty-sub">No materials match the current filter.</div></div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ SAMPLER – HISTORY ═══ -->
+  <div id="smHistory" style="display:none">
+    <div class="main-content">
+      <div class="page-header"><div><div class="page-title">Sample History</div><div class="page-sub">All recorded samples — reprint labels anytime</div></div></div>
+      <div class="table-card">
+        <div class="table-toolbar"><div class="search-box"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#9a9a94" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><input type="text" placeholder="Search samples…" oninput="renderHistory()" id="histSearch"></div></div>
+        <div class="table-wrap"><table><thead><tr>
+          <th>Sample ID</th><th>Material Name</th><th>Receipt ID</th><th>Sup. Batch No.</th><th>Sample Size</th><th>Containers</th><th>Sampler</th><th>Sampling Date</th><th>Storage Condition</th><th style="width:120px">Actions</th>
+        </tr></thead><tbody id="histTableBody"></tbody></table></div>
+        <div id="histEmpty" style="display:none"><div class="empty-state"><div class="empty-icon">📂</div><div class="empty-title">No samples recorded yet</div></div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ SAMPLER – PRODUCT SAMPLES ═══ -->
+  <div id="smFPSamples" style="display:none">
+    <div class="main-content">
+      <div class="page-header">
+        <div><div class="page-title">Product Samples</div><div class="page-sub">Register finished product, semi-finished and bulk samples</div></div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn btn-primary" onclick="openFPSampleModal('Finished Product')">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Finished Product
+          </button>
+          <button class="btn btn-info" onclick="openFPSampleModal('Semi-Finished Product')">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Semi-Finished Product
+          </button>
+          <button class="btn btn-secondary" style="border-color:var(--accent);color:var(--accent)" onclick="openFPSampleModal('Bulk')">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Bulk
+          </button>
+        </div>
+      </div>
+      <div class="table-card">
+        <div class="table-toolbar">
+          <div class="search-box"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#9a9a94" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><input type="text" placeholder="Search product samples…" oninput="renderFPSamples()" id="fpSearch"></div>
+          <select class="filter-select" id="fpTypeFilter" onchange="renderFPSamples()"><option value="">All Types</option><option>Finished Product</option><option>Semi-Finished Product</option><option>Bulk</option></select>
+        </div>
+        <div class="table-wrap"><table><thead><tr>
+          <th>Sample ID</th><th>Product Name</th><th>Type</th><th>Batch No.</th><th>Batch Size</th><th>Sample Qty</th><th>Mfg Date</th><th>Exp Date</th><th>Time</th><th>Sampling Date</th><th>Stage</th><th>Testing Status</th><th style="width:80px">Actions</th>
+        </tr></thead><tbody id="fpTableBody"></tbody></table></div>
+        <div id="fpEmpty" style="display:none"><div class="empty-state"><div class="empty-icon">🏭</div><div class="empty-title">No product samples yet</div><div class="empty-sub">Register a finished, semi-finished or bulk sample.</div></div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ SAMPLER – PRODUCT SAMPLE HISTORY ═══ -->
+  <div id="smProdHistory" style="display:none">
+    <div class="main-content">
+      <div class="page-header"><div><div class="page-title">Product Sample History</div><div class="page-sub">All registered FP / SFP / Bulk samples</div></div></div>
+      <div class="table-card">
+        <div class="table-toolbar">
+          <div class="search-box"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#9a9a94" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><input type="text" placeholder="Search…" oninput="renderProdHistory()" id="prodHistSearch"></div>
+          <select class="filter-select" id="prodHistFilter" onchange="renderProdHistory()"><option value="">All Types</option><option>Finished Product</option><option>Semi-Finished Product</option><option>Bulk</option></select>
+        </div>
+        <div class="table-wrap"><table><thead><tr>
+          <th>Sample ID</th><th>Product Name</th><th>Type</th><th>Batch No.</th><th>Batch Size</th><th>Sample Qty</th><th>Mfg Date</th><th>Exp Date</th><th>Sampling Date</th><th>Sampler</th><th>Testing Status</th><th style="width:80px">Actions</th>
+        </tr></thead><tbody id="prodHistBody"></tbody></table></div>
+        <div id="prodHistEmpty" style="display:none"><div class="empty-state"><div class="empty-icon">📂</div><div class="empty-title">No product sample history yet</div></div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ ANALYST HOME ═══ -->
+  <div id="analystHome" style="display:none">
+    <div class="analyst-home">
+      <div class="analyst-launcher">
+        <div class="launch-card" onclick="analystNav('monograph')">
+          <div class="launch-icon">📖</div>
+          <div class="launch-title">Monograph</div>
+          <div class="launch-sub">Manage material specifications</div>
+          <div class="launch-badge" id="monoBadge">0 Monographs</div>
+        </div>
+        <div class="launch-card" onclick="analystNav('samples')">
+          <div class="launch-icon">🧪</div>
+          <div class="launch-title">Samples</div>
+          <div class="launch-sub">View &amp; start testing</div>
+          <div class="launch-badge" id="samplesBadge">0 Pending</div>
+        </div>
+        <div class="launch-card" onclick="analystNav('certificates')">
+          <div class="launch-icon">📋</div>
+          <div class="launch-title">Certificates</div>
+          <div class="launch-sub">COA management</div>
+          <div class="launch-badge" id="certsBadge">0 COAs</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ ANALYST – SAMPLES ═══ -->
+  <div id="analystSamples" style="display:none">
+    <div class="main-content">
+      <div class="back-btn" onclick="analystBack()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg> Back to Dashboard
+      </div>
+      <div class="page-header"><div><div class="page-title">Samples</div><div class="page-sub">Samples received from the sampling team</div></div></div>
+      <div class="table-card">
+        <div class="table-toolbar">
+          <div class="search-box"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#9a9a94" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><input type="text" placeholder="Search samples…" oninput="renderAnalystSamples()" id="anSamplesSearch"></div>
+          <select class="filter-select" id="anSamplesFilter" onchange="renderAnalystSamples()"><option value="">All Statuses</option><option>Not Tested</option><option>In Testing</option><option>Completed</option></select>
+        </div>
+        <div class="table-wrap"><table><thead><tr>
+          <th>Receipt ID</th><th>Material Name</th><th>Sup. Batch No.</th><th>Receipt Date</th><th>Sample Qty</th><th>Container No.</th><th>Sampling Date</th><th>Sampler</th><th>Expire Date</th><th>Testing Status</th><th style="width:110px">Actions</th>
+        </tr></thead><tbody id="anSamplesBody"></tbody></table></div>
+        <div id="anSamplesEmpty" style="display:none"><div class="empty-state"><div class="empty-icon">🧪</div><div class="empty-title">No samples available</div><div class="empty-sub">Samples from the sampling team will appear here.</div></div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ ANALYST – CERTIFICATES ═══ -->
+  <div id="analystCerts" style="display:none">
+    <div class="main-content">
+      <div class="back-btn" onclick="analystBack()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg> Back to Dashboard
+      </div>
+      <div class="page-header"><div><div class="page-title">Certificates of Analysis</div><div class="page-sub">All created COAs and their approval status</div></div></div>
+      <div class="table-card">
+        <div class="table-toolbar">
+          <div class="search-box"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#9a9a94" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><input type="text" placeholder="Search COAs…" oninput="renderCerts('analyst')" id="anCertsSearch"></div>
+          <select class="filter-select" id="anCertsFilter" onchange="renderCerts('analyst')"><option value="">All Statuses</option><option>Draft</option><option>In Progress</option><option>Completed</option><option>Approved</option><option>Rejected</option></select>
+        </div>
+        <div class="table-wrap"><table><thead><tr>
+          <th>Receipt ID</th><th>Sample Name</th><th>Batch No.</th><th>Analyst</th><th>Created Date</th><th>Status</th><th style="width:80px">Actions</th>
+        </tr></thead><tbody id="anCertsBody"></tbody></table></div>
+        <div id="anCertsEmpty" style="display:none"><div class="empty-state"><div class="empty-icon">📋</div><div class="empty-title">No certificates created yet</div><div class="empty-sub">Start testing a sample to create a COA.</div></div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ QC MANAGER ═══ -->
+  <div id="qcmModule" style="display:none">
+    <div class="main-content">
+      <div class="page-header"><div><div class="page-title">COA Review &amp; Approval</div><div class="page-sub">Review completed certificates and approve or reject</div></div></div>
+      <div class="table-card">
+        <div class="table-toolbar">
+          <div class="search-box"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#9a9a94" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><input type="text" placeholder="Search COAs…" oninput="renderCerts('qcm')" id="qcmCertsSearch"></div>
+          <select class="filter-select" id="qcmCertsFilter" onchange="renderCerts('qcm')"><option value="">All Statuses</option><option>Draft</option><option>In Progress</option><option>Completed</option><option>Approved</option><option>Rejected</option></select>
+        </div>
+        <div class="table-wrap"><table><thead><tr>
+          <th>Receipt ID</th><th>Sample Name</th><th>Batch No.</th><th>Analyst</th><th>Created Date</th><th>Status</th><th style="width:120px">Actions</th>
+        </tr></thead><tbody id="qcmCertsBody"></tbody></table></div>
+        <div id="qcmCertsEmpty" style="display:none"><div class="empty-state"><div class="empty-icon">✅</div><div class="empty-title">No certificates found</div></div></div>
+      </div>
+    </div>
+  </div>
+</div><!-- /appShell -->
+
+<!-- ═══════════════════ SK MODALS ═══════════════════ -->
+
+<!-- Register Material -->
+<div class="overlay" id="registerOverlay">
+  <div class="modal">
+    <div class="modal-header"><div><div class="modal-title">Register Incoming Material</div><div class="modal-sub" id="registerSub">Receipt ID will be auto-generated</div></div><button class="modal-close" onclick="closeModal('registerOverlay')">✕</button></div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="fsec">Material Information</div>
+        <div class="form-group"><label>Material Name *</label><div class="input-row"><select id="f_materialName"></select><button class="btn-icon" onclick="openAO('materialName','f_materialName',this)">+</button></div></div>
+        <div class="form-group"><label>Category / Type</label><div class="input-row"><select id="f_category"></select><button class="btn-icon" onclick="openAO('category','f_category',this)">+</button></div></div>
+        <div class="form-group"><label>Supplier *</label><div class="input-row"><select id="f_supplier"></select><button class="btn-icon" onclick="openAO('supplier','f_supplier',this)">+</button></div></div>
+        <div class="form-group"><label>Manufacturer</label><div class="input-row"><select id="f_manufacturer"></select><button class="btn-icon" onclick="openAO('manufacturer','f_manufacturer',this)">+</button></div></div>
+        <div class="form-group"><label>Country of Origin</label><input type="text" id="f_countryOrigin" placeholder="e.g. Germany"></div>
+        <div class="form-group"><label>Supplier Batch No. *</label><input type="text" id="f_supplierBatch" placeholder="e.g. BATCH-2024-001"></div>
+        <div class="fsec">Dates &amp; Batch</div>
+        <div class="form-group"><label>Manufacturing Date</label><input type="date" id="f_mfgDate"></div>
+        <div class="form-group"><label>Expiry Date *</label><input type="date" id="f_expDate"></div>
+        <div class="form-group"><label>Batch Size</label><input type="number" id="f_batchSize" placeholder="e.g. 1000"></div>
+        <div class="form-group"><label>Unit</label><div class="input-row"><select id="f_unit"></select><button class="btn-icon" onclick="openAO('unit','f_unit',this)">+</button></div></div>
+        <div class="fsec">Packaging</div>
+        <div class="form-group"><label>Type of Packages</label><div class="input-row"><select id="f_packageType"></select><button class="btn-icon" onclick="openAO('packageType','f_packageType',this)">+</button></div></div>
+        <div class="form-group"><label>No. of Packages</label><input type="number" id="f_numPackages" placeholder="e.g. 10" oninput="calcQty()"></div>
+        <div class="form-group"><label>Package Size</label><input type="number" id="f_packageSize" placeholder="e.g. 25" oninput="calcQty()"></div>
+        <div class="form-group"><label>Total Quantity (auto)</label><input type="number" id="f_totalQty" readonly placeholder="Auto"></div>
+        <div class="fsec">Warehouse &amp; Receipt</div>
+        <div class="form-group"><label>Warehouse</label><div class="input-row"><select id="f_warehouse"></select><button class="btn-icon" onclick="openAO('warehouse','f_warehouse',this)">+</button></div></div>
+        <div class="form-group"><label>Location</label><input type="text" id="f_location" placeholder="e.g. Shelf A-3"></div>
+        <div class="form-group"><label>PO No.</label><input type="text" id="f_poNo"></div>
+        <div class="form-group"><label>Invoice No.</label><input type="text" id="f_invNo"></div>
+        <div class="form-group"><label>Receipt ID (auto)</label><input type="text" id="f_receiptId" readonly></div>
+        <div class="form-group"><label>Receipt Date *</label><input type="date" id="f_receiptDate"></div>
+        <div class="form-group form-full"><label>Received By *</label><input type="text" id="f_receivedBy" placeholder="Full name of receiver"></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('registerOverlay')">Cancel</button>
+      <button class="btn btn-primary" onclick="submitRegister()"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>Register Material</button>
+    </div>
+  </div>
+</div>
+
+<!-- View Material (SK) -->
+<div class="overlay" id="viewOverlay">
+  <div class="modal">
+    <div class="modal-header"><div><div class="modal-title" id="viewTitle">Material Details</div><div class="modal-sub" id="viewSub"></div></div><button class="modal-close" onclick="closeModal('viewOverlay')">✕</button></div>
+    <div class="modal-body" id="viewBody"></div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('viewOverlay')">Close</button>
+      <button class="btn btn-primary" id="skReqBtn" onclick="openConfirmSampling()">Request Sampling</button>
+    </div>
+  </div>
+</div>
+
+<!-- Confirm Sampling Request -->
+<div class="overlay" id="confirmOverlay">
+  <div class="modal modal-sm">
+    <div class="modal-header"><div><div class="modal-title">Confirm Sampling Request</div><div class="modal-sub">Verify details before submitting</div></div><button class="modal-close" onclick="closeModal('confirmOverlay')">✕</button></div>
+    <div class="modal-body"><div class="confirm-info" id="confirmInfo"></div><p class="confirm-note">Submitting will update sampling status to <strong>"Sampling Requested"</strong>.</p></div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('confirmOverlay')">Cancel</button>
+      <button class="btn btn-primary" onclick="submitSamplingReq()"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>Submit Request</button>
+    </div>
+  </div>
+</div>
+
+<!-- Release Label Print Modal -->
+<div class="overlay" id="releaseLabelOverlay">
+  <div class="modal modal-md">
+    <div class="modal-header"><div><div class="modal-title">Release Label</div><div class="modal-sub" id="releaseLabelSub">Print and affix to released material</div></div><button class="modal-close" onclick="closeModal('releaseLabelOverlay')">✕</button></div>
+    <div class="modal-body"><div id="releaseLabelContent"></div></div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('releaseLabelOverlay')">Close</button>
+      <button class="btn btn-purple" onclick="printReleaseLabel()"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>Print Release Label</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════ SAMPLER MODALS ═══════════════════ -->
+<!-- SM View Material -->
+<div class="overlay" id="smViewOverlay">
+  <div class="modal">
+    <div class="modal-header"><div><div class="modal-title" id="smViewTitle">Material Details</div><div class="modal-sub" id="smViewSub"></div></div><button class="modal-close" onclick="closeModal('smViewOverlay')">✕</button></div>
+    <div class="modal-body" id="smViewBody"></div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('smViewOverlay')">Close</button>
+      <button class="btn btn-primary" id="smOpenSamplingBtn" onclick="openSamplingFromView()"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>Open Sampling Form</button>
+    </div>
+  </div>
+</div>
+
+<!-- Sampling Form -->
+<div class="overlay" id="samplingFormOverlay">
+  <div class="modal modal-md">
+    <div class="modal-header"><div><div class="modal-title">Sampling Form</div><div class="modal-sub" id="sfSub"></div></div><button class="modal-close" onclick="closeModal('samplingFormOverlay')">✕</button></div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="fsec">Sample Details</div>
+        <div class="form-group"><label>Sample ID (= Receipt ID)</label><input type="text" id="sf_sampleId" readonly></div>
+        <div class="form-group"><label>Material Name</label><input type="text" id="sf_materialName" readonly></div>
+        <div class="form-group"><label>Sample Size *</label><input type="number" id="sf_sampleSize" placeholder="e.g. 200"></div>
+        <div class="form-group"><label>Unit</label><input type="text" id="sf_unit" readonly></div>
+        <div class="form-group"><label>No. of Containers Sampled *</label><input type="number" id="sf_containers" placeholder="e.g. 3"></div>
+        <div class="form-group"><label>Sampler Name *</label><input type="text" id="sf_sampler" placeholder="Full name of sampler"></div>
+        <div class="form-group"><label>Storage Condition *</label><select id="sf_storage"><option value="">Select…</option><option>Ambient (15–25°C)</option><option>Refrigerated (2–8°C)</option><option>Frozen (−20°C)</option><option>Protected from Light</option><option>Controlled Room Temperature</option></select></div>
+        <div class="form-group"><label>Sampling Date *</label><input type="date" id="sf_date"></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('samplingFormOverlay')">Cancel</button>
+      <button class="btn btn-primary" onclick="submitSampling()"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>Save &amp; Preview Labels</button>
+    </div>
+  </div>
+</div>
+
+<!-- Label Preview -->
+<div class="overlay" id="labelOverlay">
+  <div class="modal">
+    <div class="modal-header"><div><div class="modal-title">Label Preview</div><div class="modal-sub" id="labelSub">Review before printing</div></div><button class="modal-close" onclick="closeModal('labelOverlay')">✕</button></div>
+    <div class="modal-body" id="labelContent"></div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('labelOverlay')">Close</button>
+      <button class="btn btn-info" onclick="printLabels()"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>Print Labels</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════ ANALYST MODALS ═══════════════════ -->
+
+<!-- Create COA Form -->
+<div class="overlay" id="coaFormOverlay">
+  <div class="modal modal-lg">
+    <div class="modal-header"><div><div class="modal-title">Create Certificate of Analysis</div><div class="modal-sub" id="coaFormSub"></div></div><button class="modal-close" onclick="closeModal('coaFormOverlay')">✕</button></div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="fsec">Material &amp; Sample Data (Auto-filled)</div>
+        <div class="form-group"><label>Sample Name</label><input type="text" id="coa_sampleName" readonly></div>
+        <div class="form-group"><label>Batch No.</label><input type="text" id="coa_batchNo" readonly></div>
+        <div class="form-group"><label>Batch Size</label><input type="text" id="coa_batchSize" readonly></div>
+        <div class="form-group"><label>Supplier</label><input type="text" id="coa_supplier" readonly></div>
+        <div class="form-group"><label>Manufacturer</label><input type="text" id="coa_manufacturer" readonly></div>
+        <div class="form-group"><label>Manufacturing Date</label><input type="text" id="coa_mfgDate" readonly></div>
+        <div class="form-group"><label>Expiry Date</label><input type="text" id="coa_expDate" readonly></div>
+        <div class="form-group"><label>Received Date</label><input type="text" id="coa_receivedDate" readonly></div>
+        <div class="fsec">Analyst Input</div>
+        <div class="form-group"><label>Specs Code *</label><input type="text" id="coa_specsCode" placeholder="e.g. SPC-2024-001"></div>
+        <div class="form-group"><label>Reference *</label><select id="coa_reference"><option value="">Select reference…</option><option>BP 2025</option><option>USP</option><option>EP</option><option>JP</option><option>In-House</option></select></div>
+        <div class="form-group"><label>Analyst Name *</label><input type="text" id="coa_analyst" placeholder="Full name of analyst"></div>
+        <div class="form-group"><label>Analysis Date</label><input type="date" id="coa_analysisDate"></div>
+        <div class="form-group form-full"><label>Remarks / Notes</label><textarea id="coa_remarks" placeholder="Optional remarks…"></textarea></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('coaFormOverlay')">Cancel</button>
+      <button class="btn btn-primary" onclick="submitCOA()"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>Create &amp; Open COA</button>
+    </div>
+  </div>
+</div>
+
+<!-- COA Detail View -->
+<div class="overlay" id="coaViewOverlay">
+  <div class="modal modal-lg">
+    <div class="modal-header"><div><div class="modal-title" id="coaViewTitle">Certificate of Analysis</div><div class="modal-sub" id="coaViewSub"></div></div><button class="modal-close" onclick="closeModal('coaViewOverlay')">✕</button></div>
+    <div class="modal-body" id="coaViewBody"></div>
+    <div class="modal-footer" id="coaViewFooter"></div>
+  </div>
+</div>
+
+<!-- QC Manager Approve/Reject -->
+<div class="overlay" id="qcmActionOverlay">
+  <div class="modal modal-sm">
+    <div class="modal-header"><div><div class="modal-title" id="qcmActionTitle">Review COA</div><div class="modal-sub" id="qcmActionSub"></div></div><button class="modal-close" onclick="closeModal('qcmActionOverlay')">✕</button></div>
+    <div class="modal-body">
+      <div class="confirm-info" id="qcmActionInfo"></div>
+      <div class="form-group" style="margin-bottom:12px"><label>QC Manager Comments</label><textarea id="qcmComment" placeholder="Optional comments…" style="min-height:60px"></textarea></div>
+      <p class="confirm-note" id="qcmActionNote"></p>
+    </div>
+    <div class="modal-footer" id="qcmActionFooter"></div>
+  </div>
+</div>
+
+<!-- Release Material Modal -->
+<div class="overlay" id="releaseOverlay">
+  <div class="modal modal-sm">
+    <div class="modal-header"><div><div class="modal-title">Release Material</div><div class="modal-sub">COA approved — assign QC number to release</div></div><button class="modal-close" onclick="closeModal('releaseOverlay')">✕</button></div>
+    <div class="modal-body">
+      <div class="release-highlight">
+        <div style="font-weight:600;margin-bottom:6px" id="releaseMaterialName"></div>
+        <div style="font-size:12px;color:var(--text2)" id="releaseMaterialSub"></div>
+      </div>
+      <div class="form-group" style="margin-bottom:14px"><label>QC Number *</label><input type="text" id="releaseQCNum" placeholder="e.g. QC-2025-0001"></div>
+      <div class="form-group" style="margin-bottom:14px">
+        <label>Date of Retesting <span style="font-size:11px;color:var(--text3);font-weight:400">(auto: release date + 1 year)</span></label>
+        <input type="text" id="releaseRetestDate" readonly style="background:var(--accent-light);color:var(--accent);font-weight:500;font-family:'DM Mono',monospace">
+      </div>
+      <div class="form-group" style="margin-bottom:14px"><label>QC Manager Signature *</label><input type="text" id="releaseQCSign" placeholder="Full name / signature"></div>
+      <p class="confirm-note">This will mark the material as <strong>Released</strong> and notify the Storekeeper to move it to the released warehouse.</p>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('releaseOverlay')">Cancel</button>
+      <button class="btn btn-primary" onclick="submitRelease()"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>Release Material</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ PACKAGING REGISTRATION MODAL ═══ -->
+<div class="overlay" id="pkgRegOverlay">
+  <div class="modal modal-lg">
+    <div class="modal-header"><div><div class="modal-title">Register Packaging</div><div class="modal-sub" id="pkgRegSub">Receipt ID will be auto-generated</div></div><button class="modal-close" onclick="closeModal('pkgRegOverlay')">✕</button></div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="fsec">Packaging Details</div>
+        <div class="form-group"><label>Name *</label><input type="text" id="pkg_name" placeholder="e.g. Aluminium Blister Foil"></div>
+        <div class="form-group"><label>Type *</label><select id="pkg_type"><option value="">Select type…</option><option>Primary</option><option>Secondary</option><option>Tertiary</option><option>Labeling</option><option>Other</option></select></div>
+        <div class="form-group form-full"><label>Description</label><textarea id="pkg_description" placeholder="Brief description of the packaging material…"></textarea></div>
+        <div class="fsec">Quantity &amp; Unit</div>
+        <div class="form-group"><label>Quantity *</label><input type="number" id="pkg_qty" placeholder="e.g. 500"></div>
+        <div class="form-group"><label>Unit</label><div class="input-row"><select id="pkg_unit"><option value="">Select unit…</option></select><button class="btn-icon" onclick="openAO('unit','pkg_unit',this)">+</button></div></div>
+        <div class="fsec">Supplier &amp; Receipt</div>
+        <div class="form-group"><label>Supplier *</label><div class="input-row"><select id="pkg_supplier"><option value="">Select supplier…</option></select><button class="btn-icon" onclick="openAO('supplier','pkg_supplier',this)">+</button></div></div>
+        <div class="form-group"><label>PO No.</label><input type="text" id="pkg_po" placeholder="Purchase Order No."></div>
+        <div class="form-group"><label>Receipt ID (auto)</label><input type="text" id="pkg_receiptId" readonly></div>
+        <div class="form-group"><label>Receipt Date *</label><input type="date" id="pkg_receiptDate"></div>
+        <div class="form-group"><label>Warehouse</label><div class="input-row"><select id="pkg_warehouse"><option value="">Select warehouse…</option></select><button class="btn-icon" onclick="openAO('warehouse','pkg_warehouse',this)">+</button></div></div>
+        <div class="form-group"><label>Name of Recipient *</label><input type="text" id="pkg_recipient" placeholder="Full name of recipient"></div>
+        <div class="form-group form-full"><label>Other Notes</label><textarea id="pkg_notes" placeholder="Any additional notes…"></textarea></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('pkgRegOverlay')">Cancel</button>
+      <button class="btn btn-primary" onclick="submitPkg()"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>Register Packaging</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ VIEW PACKAGING MODAL ═══ -->
+<div class="overlay" id="pkgViewOverlay">
+  <div class="modal modal-md">
+    <div class="modal-header"><div><div class="modal-title" id="pkgViewTitle">Packaging Details</div><div class="modal-sub" id="pkgViewSub"></div></div><button class="modal-close" onclick="closeModal('pkgViewOverlay')">✕</button></div>
+    <div class="modal-body" id="pkgViewBody"></div>
+    <div class="modal-footer"><button class="btn btn-secondary" onclick="closeModal('pkgViewOverlay')">Close</button></div>
+  </div>
+</div>
+
+<!-- ═══ PRODUCT SAMPLE MODAL ═══ -->
+<div class="overlay" id="fpSampleOverlay">
+  <div class="modal modal-lg">
+    <div class="modal-header"><div><div class="modal-title" id="fpSampleTitle">Register Product Sample</div><div class="modal-sub" id="fpSampleSub"></div></div><button class="modal-close" onclick="closeModal('fpSampleOverlay')">✕</button></div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="fsec">Product Information</div>
+        <div class="form-group"><label>Product Type</label><input type="text" id="fps_productType" readonly style="background:var(--accent-light);color:var(--accent);font-weight:600"></div>
+        <div class="form-group"><label>Sampling Date *</label><input type="date" id="fps_date"></div>
+        <div class="form-group"><label>Time of Sampling *</label><input type="time" id="fps_time"></div>
+        <div class="form-group"><label>Product Name *</label><div class="input-row"><select id="fps_productName"><option value="">Select product…</option></select><button class="btn-icon" onclick="openAO('productName','fps_productName',this)">+</button></div></div>
+        <div class="form-group"><label>Batch No. *</label><input type="text" id="fps_batchNo" placeholder="e.g. BN-2025-001"></div>
+        <div class="form-group"><label>Batch Size *</label><input type="number" id="fps_batchSize" placeholder="e.g. 100000"></div>
+        <div class="form-group"><label>Manufacturing Date</label><input type="date" id="fps_mfgDate"></div>
+        <div class="form-group"><label>Expiry Date</label><input type="date" id="fps_expDate"></div>
+        <div class="form-group"><label>Quantity of Sample *</label><input type="number" id="fps_sampleSize" placeholder="e.g. 50"></div>
+        <div class="form-group"><label>Unit</label><div class="input-row"><select id="fps_unit"><option value="">Select unit…</option></select><button class="btn-icon" onclick="openAO('unit','fps_unit',this)">+</button></div></div>
+        <div class="fsec">Stage of Sample</div>
+        <div class="form-group form-full">
+          <div class="checkbox-group" style="flex-direction:column;gap:10px">
+            <label style="align-items:center">
+              <input type="checkbox" id="fps_stage_export" onchange="toggleStageBox('fps_export_text',this)"> Export to:
+              <input type="text" id="fps_export_text" placeholder="Destination…" style="display:none;margin-left:8px;width:200px;padding:5px 9px">
+            </label>
+            <label><input type="checkbox" id="fps_stage_local"> Local Market</label>
+            <label><input type="checkbox" id="fps_stage_upa"> UPA</label>
+            <label><input type="checkbox" id="fps_stage_fma"> F.M.A</label>
+            <label style="align-items:center">
+              <input type="checkbox" id="fps_stage_toll" onchange="toggleStageBox('fps_toll_text',this)"> For Toll:
+              <input type="text" id="fps_toll_text" placeholder="Details…" style="display:none;margin-left:8px;width:200px;padding:5px 9px">
+            </label>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('fpSampleOverlay')">Cancel</button>
+      <button class="btn btn-primary" onclick="submitFPSample()"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>Register Sample</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ VIEW PRODUCT SAMPLE MODAL ═══ -->
+<div class="overlay" id="fpViewOverlay">
+  <div class="modal modal-md">
+    <div class="modal-header"><div><div class="modal-title" id="fpViewTitle">Product Sample Details</div><div class="modal-sub" id="fpViewSub"></div></div><button class="modal-close" onclick="closeModal('fpViewOverlay')">✕</button></div>
+    <div class="modal-body" id="fpViewBody"></div>
+    <div class="modal-footer"><button class="btn btn-secondary" onclick="closeModal('fpViewOverlay')">Close</button></div>
+  </div>
+</div>
+
+<!-- ADD OPTION POPOVER -->
+<div class="add-option-box" id="aoBox">
+  <div class="add-option-label" id="aoLabel">Add new option</div>
+  <div class="add-option-row"><input type="text" id="aoInput" placeholder="Enter value…"><button onclick="confirmAO()">Add</button></div>
+</div>
+
+<!-- PRINT AREA -->
+<div id="printArea" style="display:none"></div>
+<div class="toast-container" id="toastContainer"></div>
+
+<script>
+// ═══════════════════════════════════════════
+//  STATE
+// ═══════════════════════════════════════════
+const S={
+  role:null, currentMatId:null, samplerMatId:null,
+  currentSample:null, currentCOAId:null, currentReleaseCOAId:null,
+  currentReleaseLabelMat:null,
+  materials:[], samples:[], coas:[], notifications:[], packagings:[], fpSamples:[],
+  rcCounter:1, coaCounter:1, pkgCounter:1, fpCounter:1, sfpCounter:1, blkCounter:1,
+  opts:{
+    materialName:['Paracetamol','Ibuprofen','Amoxicillin','Metformin','Aspirin'],
+    category:['API','Excipient','Packaging Material','Solvent','Reagent'],
+    supplier:['PharmaChem Ltd','BioSource Inc','EuroChem GmbH','AsiaMed Co.'],
+    manufacturer:['BASF SE','DSM Nutritional','Lonza Group','Evonik Industries'],
+    unit:['kg','g','mg','L','mL','tablets','capsules'],
+    packageType:['Drum','Bag','Carton','Bottle','Pail','IBC'],
+    warehouse:['WH-01 (Cold Storage)','WH-02 (Ambient)','WH-03 (Flammables)','WH-04 (General)'],
+    productName:['Paracetamol 500mg Tablet','Amoxicillin 250mg Capsule','Ibuprofen 400mg Tablet','Metformin 500mg Tablet'],
+  }
+};
+
+// ═══════════════════════════════════════════
+//  LOGIN / LOGOUT
+// ═══════════════════════════════════════════
+function selectRole(r){
+  S.role=r;
+  document.querySelectorAll('.role-card').forEach(c=>c.classList.remove('selected'));
+  document.getElementById('roleCard_'+r).classList.add('selected');
+  const b=document.getElementById('loginBtn');
+  b.disabled=false;
+  const labels={storekeeper:'Storekeeper',sampler:'Sampler',analyst:'Analyst',qcmanager:'QC Manager'};
+  b.textContent='Continue as '+labels[r];
+}
+
+const ALL_MODULES=['skModule','smRequests','smHistory','smFPSamples','smProdHistory','analystHome','analystSamples','analystCerts','qcmModule','samplerTabBar','skTabBar'];
+
+function doLogin(){
+  if(!S.role) return;
+  document.getElementById('loginScreen').style.display='none';
+  document.getElementById('appShell').style.display='block';
+  const roleLabels={storekeeper:'📦 Storekeeper',sampler:'🔬 Sampler',analyst:'🧪 Analyst',qcmanager:'✅ QC Manager'};
+  document.getElementById('topbarRole').textContent=roleLabels[S.role];
+  hideAll();
+  if(S.role==='storekeeper'){
+    document.getElementById('skModule').style.display='block';
+    document.getElementById('skTabBar').style.display='flex';
+    document.getElementById('notifBell').style.display='flex';
+    renderSKStats(); renderSKTable(); renderSKNotifs();
+  } else if(S.role==='sampler'){
+    document.getElementById('samplerTabBar').style.display='flex';
+    switchSMTab('requests');
+  } else if(S.role==='analyst'){
+    document.getElementById('analystHome').style.display='block';
+    refreshAnalystBadges();
+  } else if(S.role==='qcmanager'){
+    document.getElementById('qcmModule').style.display='block';
+    renderCerts('qcm');
+  }
+}
+
+function hideAll(){
+  ALL_MODULES.forEach(id=>document.getElementById(id).style.display='none');
+  document.getElementById('notifBell').style.display='none';
+}
+
+function doLogout(){
+  S.role=null; hideAll();
+  document.getElementById('appShell').style.display='none';
+  document.getElementById('loginScreen').style.display='flex';
+  document.querySelectorAll('.role-card').forEach(c=>c.classList.remove('selected'));
+  const b=document.getElementById('loginBtn'); b.disabled=true; b.textContent='Select a role to continue';
+}
+
+// ═══════════════════════════════════════════
+//  SAMPLER TABS
+// ═══════════════════════════════════════════
+function switchSMTab(tab){
+  document.getElementById('smRequests').style.display=tab==='requests'?'block':'none';
+  document.getElementById('smHistory').style.display=tab==='history'?'block':'none';
+  document.getElementById('smFPSamples').style.display=tab==='fpsamples'?'block':'none';
+  document.getElementById('smProdHistory').style.display=tab==='prodhistory'?'block':'none';
+  document.querySelectorAll('#samplerTabBar .tab-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('tab_'+tab).classList.add('active');
+  if(tab==='requests'){renderSMTable();updatePending();}
+  else if(tab==='history') renderHistory();
+  else if(tab==='fpsamples') renderFPSamples();
+  else if(tab==='prodhistory') renderProdHistory();
+}
+
+// ── SK TAB SWITCH ──
+function switchSKTab(tab){
+  document.getElementById('skMatPanel').style.display=tab==='materials'?'block':'none';
+  document.getElementById('skPkgPanel').style.display=tab==='packaging'?'block':'none';
+  document.querySelectorAll('#skTabBar .tab-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('sktab_'+tab).classList.add('active');
+  if(tab==='packaging'){renderPkgTable();renderPkgStats();}
+  else{renderSKTable();renderSKStats();}
+}
+function updatePending(){
+  const n=S.materials.filter(m=>m.samplingStatus==='Sampling Requested').length;
+  document.getElementById('pendingBadge').textContent=n;
+  document.getElementById('smPendingNum').textContent=n;
+}
+
+// ═══════════════════════════════════════════
+//  ANALYST NAVIGATION
+// ═══════════════════════════════════════════
+function analystNav(page){
+  document.getElementById('analystHome').style.display='none';
+  if(page==='samples'){document.getElementById('analystSamples').style.display='block';renderAnalystSamples();}
+  else if(page==='certificates'){document.getElementById('analystCerts').style.display='block';renderCerts('analyst');}
+  else if(page==='monograph'){showToast('Monograph module coming soon!','info');}
+}
+function analystBack(){
+  document.getElementById('analystSamples').style.display='none';
+  document.getElementById('analystCerts').style.display='none';
+  document.getElementById('analystHome').style.display='block';
+  refreshAnalystBadges();
+}
+function refreshAnalystBadges(){
+  document.getElementById('monoBadge').textContent='0 Monographs';
+  const pending=S.samples.filter(s=>s.testingStatus==='Not Tested').length;
+  document.getElementById('samplesBadge').textContent=pending+' Pending';
+  document.getElementById('certsBadge').textContent=S.coas.length+' COAs';
+}
+
+// ═══════════════════════════════════════════
+//  REGISTER MATERIAL
+// ═══════════════════════════════════════════
+function openRegisterModal(){
+  ['materialName','category','supplier','manufacturer','countryOrigin','supplierBatch','mfgDate','expDate',
+   'batchSize','unit','packageType','numPackages','packageSize','totalQty','warehouse','location','poNo','invNo','receivedBy','receiptDate']
+   .forEach(f=>{const e=document.getElementById('f_'+f);if(e)e.value='';});
+  const rid='RCV-'+new Date().getFullYear()+'-'+String(S.rcCounter).padStart(4,'0');
+  document.getElementById('f_receiptId').value=rid;
+  document.getElementById('registerSub').textContent='Receipt ID: '+rid;
+  document.getElementById('f_receiptDate').value=td();
+  fillSelects(); openModal('registerOverlay');
+}
+function fillSelects(){
+  const map={'f_materialName':'materialName','f_category':'category','f_supplier':'supplier','f_manufacturer':'manufacturer','f_unit':'unit','f_packageType':'packageType','f_warehouse':'warehouse'};
+  Object.entries(map).forEach(([eid,key])=>{
+    const sel=document.getElementById(eid);if(!sel)return;
+    const cur=sel.value; sel.innerHTML='<option value="">Select…</option>';
+    S.opts[key].forEach(o=>{const el=document.createElement('option');el.value=o;el.textContent=o;if(o===cur)el.selected=true;sel.appendChild(el);});
+  });
+}
+function calcQty(){
+  const n=parseFloat(document.getElementById('f_numPackages').value)||0;
+  const s=parseFloat(document.getElementById('f_packageSize').value)||0;
+  document.getElementById('f_totalQty').value=n&&s?n*s:'';
+}
+function submitRegister(){
+  const req={f_materialName:'Material Name',f_supplier:'Supplier',f_supplierBatch:'Supplier Batch No.',f_expDate:'Expiry Date',f_receiptDate:'Receipt Date',f_receivedBy:'Received By'};
+  for(const [id,lbl] of Object.entries(req)){const el=document.getElementById(id);if(!el||!el.value.trim()){showToast(lbl+' is required.','error');el&&el.focus();return;}}
+  const m={
+    id:'MAT-'+Date.now(), receiptId:document.getElementById('f_receiptId').value,
+    materialName:document.getElementById('f_materialName').value, category:document.getElementById('f_category').value,
+    supplier:document.getElementById('f_supplier').value, manufacturer:document.getElementById('f_manufacturer').value,
+    countryOrigin:document.getElementById('f_countryOrigin').value, supplierBatch:document.getElementById('f_supplierBatch').value,
+    mfgDate:document.getElementById('f_mfgDate').value, expDate:document.getElementById('f_expDate').value,
+    batchSize:document.getElementById('f_batchSize').value, unit:document.getElementById('f_unit').value,
+    packageType:document.getElementById('f_packageType').value, numPackages:document.getElementById('f_numPackages').value,
+    packageSize:document.getElementById('f_packageSize').value, totalQty:document.getElementById('f_totalQty').value,
+    warehouse:document.getElementById('f_warehouse').value, location:document.getElementById('f_location').value,
+    poNo:document.getElementById('f_poNo').value, invNo:document.getElementById('f_invNo').value,
+    receiptDate:document.getElementById('f_receiptDate').value, receivedBy:document.getElementById('f_receivedBy').value,
+    status:'Quarantine', samplingStatus:'Not Sampled', qcStatus:'Pending', qcNumber:null, storageCondition:null, retestDate:null,
+  };
+  S.materials.push(m); S.rcCounter++;
+  closeModal('registerOverlay'); renderSKTable(); renderSKStats();
+  showToast('Material registered successfully!','success');
+}
+
+// ═══════════════════════════════════════════
+//  PACKAGING REGISTRATION
+// ═══════════════════════════════════════════
+function fillPkgSelects(){
+  const map={'pkg_supplier':'supplier','pkg_unit':'unit','pkg_warehouse':'warehouse','fps_unit':'unit','fps_productName':'productName'};
+  Object.entries(map).forEach(([eid,key])=>{
+    const sel=document.getElementById(eid); if(!sel) return;
+    const cur=sel.value; sel.innerHTML='<option value="">Select…</option>';
+    S.opts[key].forEach(o=>{const el=document.createElement('option');el.value=o;el.textContent=o;if(o===cur)el.selected=true;sel.appendChild(el);});
+  });
+}
+
+function openPkgModal(){
+  ['pkg_name','pkg_description','pkg_qty','pkg_po','pkg_recipient','pkg_notes'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});
+  document.getElementById('pkg_type').value='';
+  const rid='PKG-'+new Date().getFullYear()+'-'+String(S.pkgCounter).padStart(4,'0');
+  document.getElementById('pkg_receiptId').value=rid;
+  document.getElementById('pkgRegSub').textContent='Receipt ID: '+rid;
+  document.getElementById('pkg_receiptDate').value=td();
+  fillPkgSelects(); openModal('pkgRegOverlay');
+}
+
+function submitPkg(){
+  const req={pkg_name:'Name',pkg_qty:'Quantity',pkg_supplier:'Supplier',pkg_receiptDate:'Receipt Date',pkg_recipient:'Name of Recipient'};
+  for(const [id,lbl] of Object.entries(req)){const el=document.getElementById(id);if(!el||!el.value.trim()){showToast(lbl+' is required.','error');el&&el.focus();return;}}
+  const p={
+    id:'PKG-'+Date.now(),
+    receiptId:document.getElementById('pkg_receiptId').value,
+    name:document.getElementById('pkg_name').value,
+    type:document.getElementById('pkg_type').value,
+    description:document.getElementById('pkg_description').value,
+    qty:document.getElementById('pkg_qty').value,
+    unit:document.getElementById('pkg_unit').value,
+    supplier:document.getElementById('pkg_supplier').value,
+    po:document.getElementById('pkg_po').value,
+    receiptDate:document.getElementById('pkg_receiptDate').value,
+    warehouse:document.getElementById('pkg_warehouse').value,
+    recipient:document.getElementById('pkg_recipient').value,
+    notes:document.getElementById('pkg_notes').value,
+  };
+  S.packagings.push(p); S.pkgCounter++;
+  closeModal('pkgRegOverlay'); renderPkgTable(); renderPkgStats();
+  showToast('Packaging registered successfully!','success');
+}
+
+function renderPkgTable(){
+  const s=(document.getElementById('pkgSearch')?.value||'').toLowerCase();
+  const tf=document.getElementById('pkgTypeFilter')?.value||'';
+  const fl=S.packagings.filter(p=>{
+    const ms=!s||p.name.toLowerCase().includes(s)||p.receiptId.toLowerCase().includes(s)||(p.supplier||'').toLowerCase().includes(s);
+    return ms&&(!tf||p.type===tf);
+  });
+  const tb=document.getElementById('pkgTableBody'), em=document.getElementById('pkgEmpty');
+  if(!fl.length){tb.innerHTML='';em.style.display='block';return;}
+  em.style.display='none';
+  tb.innerHTML=fl.map(p=>{
+    const canReq=!p.samplingStatus||p.samplingStatus==='Not Sampled';
+    const sampBadge=p.samplingStatus
+      ? (p.samplingStatus==='Sampling Requested'
+          ?'<span class="badge badge-requested"><span class="badge-dot"></span>Requested</span>'
+          :p.samplingStatus==='Sampled'
+          ?'<span class="badge badge-sampled"><span class="badge-dot"></span>Sampled</span>'
+          :'<span class="badge badge-notsampled"><span class="badge-dot"></span>Not Sampled</span>')
+      :'<span class="badge badge-notsampled"><span class="badge-dot"></span>Not Sampled</span>';
+    return `<tr>
+      <td class="mono">${p.receiptId}</td>
+      <td><strong>${p.name}</strong></td>
+      <td>${p.type?`<span class="badge badge-packaging"><span class="badge-dot"></span>${p.type}</span>`:'<span style="color:var(--text3)">—</span>'}</td>
+      <td style="max-width:160px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="${p.description||''}">${p.description||'—'}</td>
+      <td>${p.qty} ${p.unit||''}</td>
+      <td>${p.unit||'—'}</td>
+      <td>${p.supplier||'—'}</td>
+      <td>${fd(p.receiptDate)}</td>
+      <td>${p.recipient}</td>
+      <td>${p.warehouse||'—'}</td>
+      <td>${sampBadge}</td>
+      <td><div class="action-group">
+        <button class="btn btn-secondary btn-sm" onclick="viewPkg('${p.id}')">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>View
+        </button>
+        ${canReq?`<button class="btn btn-primary btn-sm" onclick="requestPkgSampling('${p.id}')">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>Request Sampling
+        </button>`:''}
+      </div></td>
+    </tr>`;
+  }).join('');
+}
+
+function renderPkgStats(){
+  const t=S.packagings.length;
+  const types=[...new Set(S.packagings.map(p=>p.type).filter(Boolean))].length;
+  const totalQty=S.packagings.reduce((acc,p)=>acc+(parseFloat(p.qty)||0),0);
+  document.getElementById('pkgStats').innerHTML=`
+    <div class="stat-card"><div class="stat-label">Total Packaging</div><div class="stat-value">${t}</div><div class="stat-sub">Registered</div></div>
+    <div class="stat-card"><div class="stat-label">Types</div><div class="stat-value">${types}</div><div class="stat-sub">Distinct types</div></div>
+    <div class="stat-card"><div class="stat-label">Total Qty (all)</div><div class="stat-value" style="font-size:20px">${totalQty.toLocaleString()}</div><div class="stat-sub">Combined units</div></div>
+    <div class="stat-card"><div class="stat-label">Suppliers</div><div class="stat-value">${[...new Set(S.packagings.map(p=>p.supplier).filter(Boolean))].length}</div><div class="stat-sub">Distinct suppliers</div></div>`;
+}
+
+function viewPkg(id){
+  const p=S.packagings.find(x=>x.id===id); if(!p) return;
+  document.getElementById('pkgViewTitle').textContent=p.name;
+  document.getElementById('pkgViewSub').textContent=`${p.receiptId}  ·  ${p.supplier||'—'}`;
+  document.getElementById('pkgViewBody').innerHTML=`
+    <div class="detail-section"><div class="detail-section-title">Packaging Details</div><div class="detail-grid">
+      ${dr('Name',p.name)}${dr('Type',p.type)}
+      ${dr('Quantity',p.qty+' '+(p.unit||''))}${dr('Supplier',p.supplier)}
+      ${dr('PO No.',p.po,true)}${dr('Warehouse',p.warehouse)}
+      ${dr('Receipt ID',p.receiptId,true)}${dr('Receipt Date',fd(p.receiptDate))}
+      ${dr('Recipient',p.recipient)}
+    </div></div>
+    ${p.description?`<div class="detail-section"><div class="detail-section-title">Description</div><p style="font-size:13px;line-height:1.6">${p.description}</p></div>`:''}
+    ${p.notes?`<div class="detail-section"><div class="detail-section-title">Notes</div><p style="font-size:13px;line-height:1.6">${p.notes}</p></div>`:''}`;
+  openModal('pkgViewOverlay');
+}
+
+function requestPkgSampling(id){
+  const p=S.packagings.find(x=>x.id===id); if(!p) return;
+  if(p.samplingStatus==='Sampling Requested'){showToast('Already requested.','info');return;}
+  p.samplingStatus='Sampling Requested';
+  // Add to samples queue as a packaging sample
+  const smpId='PKG-SMP-'+new Date().getFullYear()+'-'+String(S.pkgCounter).padStart(4,'0');
+  S.pkgCounter++;
+  S.samples.push({
+    id:'PKGSMP-'+Date.now(), sampleId:smpId,
+    materialId:null, packagingId:id,
+    materialName:p.name+' (Packaging)',
+    receiptId:p.receiptId, supplierBatch:'PKG',
+    supplier:p.supplier, manufacturer:'', expDate:'',
+    receiptDate:p.receiptDate, batchSize:p.qty, mfgDate:'', unit:p.unit,
+    sampleSize:'', containers:'', sampler:'', storage:'', samplingDate:'',
+    testingStatus:'Not Tested', sampleType:'Packaging',
+  });
+  renderPkgTable(); renderPkgStats();
+  showToast('Sampling requested for packaging: '+p.name,'success');
+}
+
+// ═══════════════════════════════════════════
+//  FINISHED / SEMI-FINISHED PRODUCT SAMPLES
+// ═══════════════════════════════════════════
+function openFPSampleModal(type){
+  ['fps_batchNo','fps_batchSize','fps_sampleSize'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});
+  document.getElementById('fps_time').value='';
+  document.getElementById('fps_date').value=td();
+  document.getElementById('fps_mfgDate').value='';
+  document.getElementById('fps_expDate').value='';
+  document.getElementById('fps_productType').value=type;
+  const typeLabels={'Finished Product':'FP','Semi-Finished Product':'SFP','Bulk':'BLK'};
+  document.getElementById('fpSampleTitle').textContent='Register '+type+' Sample';
+  document.getElementById('fpSampleSub').textContent=typeLabels[type]+' — New Sample Registration';
+  ['fps_stage_export','fps_stage_local','fps_stage_upa','fps_stage_fma','fps_stage_toll'].forEach(id=>{
+    const el=document.getElementById(id); if(el) el.checked=false;
+  });
+  const et=document.getElementById('fps_export_text'); if(et){et.style.display='none';et.value='';}
+  const tt=document.getElementById('fps_toll_text'); if(tt){tt.style.display='none';tt.value='';}
+  fillPkgSelects();
+  openModal('fpSampleOverlay');
+}
+
+function toggleStageBox(inputId, cb){
+  const el=document.getElementById(inputId);
+  if(!el) return;
+  el.style.display=cb.checked?'inline-block':'none';
+  if(!cb.checked) el.value='';
+}
+
+function submitFPSample(){
+  const req={fps_productName:'Product Name',fps_batchNo:'Batch No.',fps_batchSize:'Batch Size',fps_sampleSize:'Quantity of Sample',fps_date:'Sampling Date',fps_time:'Time of Sampling'};
+  for(const [id,lbl] of Object.entries(req)){
+    const el=document.getElementById(id);
+    const val=el?(el.tagName==='SELECT'?el.value:el.value.trim()):'';
+    if(!val){showToast(lbl+' is required.','error');el&&el.focus();return;}
+  }
+  const type=document.getElementById('fps_productType').value;
+  const prefixes={'Finished Product':'FP','Semi-Finished Product':'SFP','Bulk':'BLK'};
+  const prefix=prefixes[type]||'FPS';
+  const counterKey=type==='Finished Product'?'fpCounter':type==='Semi-Finished Product'?'sfpCounter':'blkCounter';
+  const smpId=prefix+'-'+new Date().getFullYear()+'-'+String(S[counterKey]).padStart(4,'0');
+  S[counterKey]++;
+  // Collect stages
+  const stages=[];
+  const exportCb=document.getElementById('fps_stage_export');
+  if(exportCb&&exportCb.checked){
+    const txt=document.getElementById('fps_export_text')?.value.trim();
+    stages.push('Export to: '+(txt||'…'));
+  }
+  if(document.getElementById('fps_stage_local')?.checked) stages.push('Local Market');
+  if(document.getElementById('fps_stage_upa')?.checked) stages.push('UPA');
+  if(document.getElementById('fps_stage_fma')?.checked) stages.push('F.M.A');
+  const tollCb=document.getElementById('fps_stage_toll');
+  if(tollCb&&tollCb.checked){
+    const txt=document.getElementById('fps_toll_text')?.value.trim();
+    stages.push('For Toll: '+(txt||'…'));
+  }
+  const fp={
+    id:'FPSMP-'+Date.now(), sampleId:smpId,
+    productName:document.getElementById('fps_productName').value,
+    productType:type,
+    batchNo:document.getElementById('fps_batchNo').value,
+    batchSize:document.getElementById('fps_batchSize').value,
+    unit:document.getElementById('fps_unit').value,
+    mfgDate:document.getElementById('fps_mfgDate').value,
+    expDate:document.getElementById('fps_expDate').value,
+    sampleSize:document.getElementById('fps_sampleSize').value,
+    timeOfSampling:document.getElementById('fps_time').value,
+    samplingDate:document.getElementById('fps_date').value,
+    stages:stages,
+    testingStatus:'Not Tested',
+  };
+  S.fpSamples.push(fp); S[counterKey]; // already incremented
+  closeModal('fpSampleOverlay'); renderFPSamples(); renderProdHistory();
+  showToast(type+' sample registered! ID: '+smpId,'success');
+}
+
+function fpTypeBadge(t){
+  if(t==='Finished Product') return '<span class="badge badge-fp"><span class="badge-dot"></span>Finished Product</span>';
+  if(t==='Semi-Finished Product') return '<span class="badge badge-sfp"><span class="badge-dot"></span>Semi-Finished</span>';
+  return '<span class="badge badge-bulk"><span class="badge-dot"></span>Bulk</span>';
+}
+
+function renderFPSamples(){
+  const s=(document.getElementById('fpSearch')?.value||'').toLowerCase();
+  const tf=document.getElementById('fpTypeFilter')?.value||'';
+  const fl=S.fpSamples.filter(x=>{
+    const ms=!s||x.productName.toLowerCase().includes(s)||x.sampleId.toLowerCase().includes(s);
+    return ms&&(!tf||x.productType===tf);
+  });
+  const tb=document.getElementById('fpTableBody'), em=document.getElementById('fpEmpty');
+  if(!fl.length){tb.innerHTML='';em.style.display='block';return;}
+  em.style.display='none';
+  tb.innerHTML=fl.map(f=>`<tr>
+    <td class="mono">${f.sampleId}</td>
+    <td><strong>${f.productName}</strong></td>
+    <td>${fpTypeBadge(f.productType)}</td>
+    <td class="mono">${f.batchNo||'—'}</td>
+    <td>${f.batchSize} ${f.unit||''}</td>
+    <td>${f.sampleSize} ${f.unit||''}</td>
+    <td>${fd(f.mfgDate)}</td>
+    <td>${fd(f.expDate)}</td>
+    <td>${f.timeOfSampling||'—'}</td>
+    <td>${fd(f.samplingDate)}</td>
+    <td style="max-width:150px">${f.stages&&f.stages.length?f.stages.map(s=>'<span style="font-size:10px;background:var(--surface2);border:1px solid var(--border);border-radius:4px;padding:1px 5px;margin-right:2px">'+s+'</span>').join(''):'<span style="color:var(--text3)">—</span>'}</td>
+    <td>${testBadge(f.testingStatus||'Not Tested')}</td>
+    <td><button class="btn btn-secondary btn-sm" onclick="viewFPSample('${f.id}')">
+      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>View
+    </button></td>
+  </tr>`).join('');
+}
+
+function renderProdHistory(){
+  const s=(document.getElementById('prodHistSearch')?.value||'').toLowerCase();
+  const tf=document.getElementById('prodHistFilter')?.value||'';
+  const fl=S.fpSamples.filter(x=>{
+    const ms=!s||x.productName.toLowerCase().includes(s)||x.sampleId.toLowerCase().includes(s)||(x.batchNo||'').toLowerCase().includes(s);
+    return ms&&(!tf||x.productType===tf);
+  });
+  const tb=document.getElementById('prodHistBody'), em=document.getElementById('prodHistEmpty');
+  if(!fl.length){tb.innerHTML='';em.style.display='block';return;}
+  em.style.display='none';
+  tb.innerHTML=fl.map(f=>`<tr>
+    <td class="mono">${f.sampleId}</td>
+    <td><strong>${f.productName}</strong></td>
+    <td>${fpTypeBadge(f.productType)}</td>
+    <td class="mono">${f.batchNo||'—'}</td>
+    <td>${f.batchSize} ${f.unit||''}</td>
+    <td>${f.sampleSize} ${f.unit||''}</td>
+    <td>${fd(f.mfgDate)}</td>
+    <td>${fd(f.expDate)}</td>
+    <td>${fd(f.samplingDate)}</td>
+    <td>—</td>
+    <td>${testBadge(f.testingStatus||'Not Tested')}</td>
+    <td><button class="btn btn-secondary btn-sm" onclick="viewFPSample('${f.id}')">
+      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>View
+    </button></td>
+  </tr>`).join('');
+}
+
+function viewFPSample(id){
+  const f=S.fpSamples.find(x=>x.id===id); if(!f) return;
+  document.getElementById('fpViewTitle').textContent=f.productName;
+  document.getElementById('fpViewSub').textContent=`${f.sampleId}  ·  ${f.productType}`;
+  document.getElementById('fpViewBody').innerHTML=`
+    <div class="detail-section"><div class="detail-section-title">Product &amp; Sample Details</div><div class="detail-grid">
+      ${dr('Product Name',f.productName)}${dr('Product Type',f.productType)}
+      ${dr('Batch No.',f.batchNo,true)}${dr('Batch Size',f.batchSize+' '+(f.unit||''))}
+      ${dr('Manufacturing Date',fd(f.mfgDate))}${dr('Expiry Date',fd(f.expDate))}
+      ${dr('Quantity of Sample',f.sampleSize+' '+(f.unit||''))}${dr('Time of Sampling',f.timeOfSampling)}
+      ${dr('Sampling Date',fd(f.samplingDate))}
+    </div></div>
+    <div class="detail-section"><div class="detail-section-title">Stage of Sample</div>
+      <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:4px">
+        ${f.stages&&f.stages.length?f.stages.map(s=>'<span class="badge badge-requested"><span class="badge-dot"></span>'+s+'</span>').join(''):'<span style="color:var(--text3);font-size:13px">No stage selected</span>'}
+      </div>
+    </div>
+    <div class="detail-section"><div class="detail-section-title">Testing Status</div>
+      <div>${testBadge(f.testingStatus||'Not Tested')}</div>
+    </div>`;
+  openModal('fpViewOverlay');
+}
+
+// ═══════════════════════════════════════════
+//  SK TABLE & STATS
+// ═══════════════════════════════════════════
+function renderSKTable(){
+  const s=(document.getElementById('skSearch')?.value||'').toLowerCase();
+  const sf=document.getElementById('skStatusFilter')?.value||'';
+  const smf=document.getElementById('skSamplingFilter')?.value||'';
+  const fl=S.materials.filter(m=>{
+    const ms=!s||m.materialName.toLowerCase().includes(s)||m.receiptId.toLowerCase().includes(s)||m.supplierBatch.toLowerCase().includes(s);
+    return ms&&(!sf||m.status===sf)&&(!smf||m.samplingStatus===smf);
+  });
+  const tb=document.getElementById('skTableBody'), em=document.getElementById('skEmpty');
+  if(!fl.length){tb.innerHTML='';em.style.display='block';return;}
+  em.style.display='none';
+  tb.innerHTML=fl.map(m=>`<tr>
+    <td class="mono">${m.receiptId}</td>
+    <td><strong>${m.materialName}</strong>${m.category?`<br><span style="font-size:11px;color:var(--text3)">${m.category}</span>`:''}</td>
+    <td class="mono">${m.supplierBatch}</td><td>${fd(m.receiptDate)}</td>
+    <td>${m.totalQty||'—'} ${m.unit||''}</td><td>${sBadge(m.status)}</td><td>${ssBadge(m.samplingStatus)}</td><td>${fd(m.expDate)}</td>
+    <td><div class="action-group">
+      <button class="btn btn-secondary btn-sm" onclick="openView('${m.id}','sk')"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>View</button>
+      ${m.status==='Released'?`<button class="btn btn-purple btn-sm" onclick="openReleaseLabel('${m.id}')"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>Label</button>`:''}
+    </div></td>
+  </tr>`).join('');
+}
+function renderSKStats(){
+  const t=S.materials.length, q=S.materials.filter(m=>m.status==='Quarantine').length;
+  const r=S.materials.filter(m=>m.samplingStatus==='Sampling Requested').length;
+  const rel=S.materials.filter(m=>m.status==='Released').length;
+  document.getElementById('skStats').innerHTML=`
+    <div class="stat-card"><div class="stat-label">Total Materials</div><div class="stat-value">${t}</div><div class="stat-sub">Registered</div></div>
+    <div class="stat-card"><div class="stat-label">In Quarantine</div><div class="stat-value" style="color:var(--warning)">${q}</div><div class="stat-sub">Pending release</div></div>
+    <div class="stat-card"><div class="stat-label">Sampling Requested</div><div class="stat-value" style="color:var(--info)">${r}</div><div class="stat-sub">Awaiting sampler</div></div>
+    <div class="stat-card"><div class="stat-label">Released</div><div class="stat-value" style="color:var(--accent)">${rel}</div><div class="stat-sub">QC approved</div></div>`;
+}
+function renderSKNotifs(){
+  const area=document.getElementById('skNotifArea'); if(!area) return;
+  const unread=S.notifications.filter(n=>!n.read&&n.target==='storekeeper');
+  document.getElementById('notifDot').classList.toggle('show',unread.length>0);
+  if(!unread.length){area.innerHTML='';return;}
+  area.innerHTML=unread.map(n=>`
+    <div class="notif-banner" id="notif_${n.id}">
+      <div class="notif-banner-icon">🎉</div>
+      <div><div class="notif-banner-text">${n.title}</div><div class="notif-banner-sub">${n.message}</div></div>
+      <span class="notif-banner-close" onclick="dismissNotif('${n.id}')">✕</span>
+    </div>`).join('');
+}
+function dismissNotif(id){
+  const n=S.notifications.find(x=>x.id===id); if(n) n.read=true;
+  renderSKNotifs();
+}
+function showNotifPanel(){
+  renderSKNotifs();
+  const unread=S.notifications.filter(n=>!n.read&&n.target==='storekeeper');
+  if(!unread.length) showToast('No new notifications','info');
+}
+
+// ═══════════════════════════════════════════
+//  SHARED VIEW MATERIAL
+// ═══════════════════════════════════════════
+function openView(id,role){
+  const m=S.materials.find(x=>x.id===id); if(!m) return;
+  S.currentMatId=id; S.samplerMatId=id;
+  const isSK=role==='sk';
+  document.getElementById(isSK?'viewTitle':'smViewTitle').textContent=m.materialName;
+  document.getElementById(isSK?'viewSub':'smViewSub').textContent=`${m.receiptId}  ·  ${m.supplier||'—'}`;
+  if(isSK) document.getElementById('skReqBtn').style.display=m.samplingStatus==='Not Sampled'?'':'none';
+  else document.getElementById('smOpenSamplingBtn').style.display=m.samplingStatus==='Sampling Requested'?'':'none';
+  document.getElementById(isSK?'viewBody':'smViewBody').innerHTML=buildDetailHTML(m);
+  openModal(isSK?'viewOverlay':'smViewOverlay');
+}
+function buildDetailHTML(m){return `
+  <div class="detail-section"><div class="detail-section-title">Material Information</div><div class="detail-grid">
+    ${dr('Material Name',m.materialName)}${dr('Category',m.category)}${dr('Supplier',m.supplier)}${dr('Manufacturer',m.manufacturer)}${dr('Country of Origin',m.countryOrigin)}${dr('Supplier Batch No.',m.supplierBatch,true)}
+  </div></div>
+  <div class="detail-section"><div class="detail-section-title">Dates &amp; Batch</div><div class="detail-grid">
+    ${dr('Manufacturing Date',fd(m.mfgDate))}${dr('Expiry Date',fd(m.expDate))}${dr('Batch Size',m.batchSize?(m.batchSize+' '+m.unit):'—')}
+  </div></div>
+  <div class="detail-section"><div class="detail-section-title">Packaging</div><div class="detail-grid">
+    ${dr('Type of Packages',m.packageType)}${dr('No. of Packages',m.numPackages)}${dr('Package Size',m.packageSize)}${dr('Total Quantity',m.totalQty?(m.totalQty+' '+m.unit):'—')}
+  </div></div>
+  <div class="detail-section"><div class="detail-section-title">Warehouse &amp; Receipt</div><div class="detail-grid">
+    ${dr('Warehouse',m.warehouse)}${dr('Location',m.location)}${dr('PO No.',m.poNo,true)}${dr('Invoice No.',m.invNo,true)}${dr('Receipt ID',m.receiptId,true)}${dr('Receipt Date',fd(m.receiptDate))}${dr('Received By',m.receivedBy)}
+  </div></div>
+  <div class="detail-section"><div class="detail-section-title">Current Status</div><div class="detail-grid">
+    <div class="detail-item"><div class="detail-key">Material Status</div><div class="detail-val">${sBadge(m.status)}</div></div>
+    <div class="detail-item"><div class="detail-key">Sampling Status</div><div class="detail-val">${ssBadge(m.samplingStatus)}</div></div>
+  </div></div>`;}
+function dr(k,v,mono=false){return `<div class="detail-item"><div class="detail-key">${k}</div><div class="detail-val ${mono?'mono':''}">${v||'—'}</div></div>`;}
+
+// ═══════════════════════════════════════════
+//  SAMPLING REQUEST (SK)
+// ═══════════════════════════════════════════
+function openConfirmSampling(){
+  const m=S.materials.find(x=>x.id===S.currentMatId); if(!m) return;
+  document.getElementById('confirmInfo').innerHTML=`
+    <div class="confirm-row"><span>Material Name</span><span>${m.materialName}</span></div>
+    <div class="confirm-row"><span>Receipt ID</span><span class="mono">${m.receiptId}</span></div>
+    <div class="confirm-row"><span>Supplier Batch No.</span><span class="mono">${m.supplierBatch}</span></div>
+    <div class="confirm-row"><span>Supplier</span><span>${m.supplier||'—'}</span></div>
+    <div class="confirm-row"><span>Total Quantity</span><span>${m.totalQty||'—'} ${m.unit||''}</span></div>`;
+  openModal('confirmOverlay');
+}
+function submitSamplingReq(){
+  const m=S.materials.find(x=>x.id===S.currentMatId); if(!m) return;
+  m.samplingStatus='Sampling Requested';
+  closeModal('confirmOverlay'); closeModal('viewOverlay');
+  renderSKTable(); renderSKStats();
+  showToast('Sampling request submitted!','success');
+}
+
+// ═══════════════════════════════════════════
+//  SAMPLER TABLE
+// ═══════════════════════════════════════════
+function renderSMTable(){
+  const s=(document.getElementById('smSearch')?.value||'').toLowerCase();
+  const vf=document.getElementById('smViewFilter')?.value||'';
+  updatePending();
+  const fl=S.materials.filter(m=>{
+    const ms=!s||m.materialName.toLowerCase().includes(s)||m.receiptId.toLowerCase().includes(s)||m.supplierBatch.toLowerCase().includes(s);
+    return ms&&(!vf||m.samplingStatus===vf);
+  });
+  const tb=document.getElementById('smTableBody'), em=document.getElementById('smEmpty');
+  if(!fl.length){tb.innerHTML='';em.style.display='block';return;}
+  em.style.display='none';
+  tb.innerHTML=fl.map(m=>{
+    const can=m.samplingStatus==='Sampling Requested';
+    return `<tr>
+      <td class="mono">${m.receiptId}</td>
+      <td><strong>${m.materialName}</strong>${m.category?`<br><span style="font-size:11px;color:var(--text3)">${m.category}</span>`:''}</td>
+      <td class="mono">${m.supplierBatch}</td><td>${fd(m.receiptDate)}</td><td>${m.totalQty||'—'} ${m.unit||''}</td>
+      <td>${sBadge(m.status)}</td><td>${ssBadge(m.samplingStatus)}</td><td>${fd(m.expDate)}</td><td>${m.numPackages||'—'}</td>
+      <td><div class="action-group">
+        <button class="btn btn-secondary btn-sm" onclick="openView('${m.id}','sampler')"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>View</button>
+        ${can?`<button class="btn btn-primary btn-sm" onclick="openSamplingDirect('${m.id}')"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>Sample</button>`:
+        `<button class="btn btn-secondary btn-sm" disabled>Sample</button>`}
+      </div></td>
+    </tr>`;
+  }).join('');
+}
+
+// ═══════════════════════════════════════════
+//  SAMPLING FORM
+// ═══════════════════════════════════════════
+function openSamplingFromView(){closeModal('smViewOverlay');openSamplingDirect(S.samplerMatId);}
+function openSamplingDirect(id){
+  const m=S.materials.find(x=>x.id===id); if(!m) return;
+  S.samplerMatId=id;
+  document.getElementById('sf_sampleId').value=m.receiptId;
+  document.getElementById('sf_materialName').value=m.materialName;
+  document.getElementById('sf_unit').value=m.unit||'';
+  ['sf_sampleSize','sf_containers','sf_sampler','sf_storage'].forEach(i=>document.getElementById(i).value='');
+  document.getElementById('sf_date').value=td();
+  document.getElementById('sfSub').textContent=`${m.receiptId}  ·  ${m.materialName}`;
+  openModal('samplingFormOverlay');
+}
+function submitSampling(){
+  const req={sf_sampleSize:'Sample Size',sf_containers:'No. of Containers',sf_sampler:'Sampler Name',sf_storage:'Storage Condition',sf_date:'Sampling Date'};
+  for(const [id,lbl] of Object.entries(req)){const el=document.getElementById(id);if(!el||!el.value.trim()){showToast(lbl+' is required.','error');el&&el.focus();return;}}
+  const m=S.materials.find(x=>x.id===S.samplerMatId); if(!m) return;
+  const sample={
+    id:'SMP-'+Date.now(), sampleId:document.getElementById('sf_sampleId').value,
+    materialId:m.id, materialName:m.materialName, receiptId:m.receiptId,
+    supplierBatch:m.supplierBatch, supplier:m.supplier, manufacturer:m.manufacturer,
+    expDate:m.expDate, warehouse:m.warehouse, location:m.location, unit:m.unit,
+    receiptDate:m.receiptDate, batchSize:m.batchSize, mfgDate:m.mfgDate,
+    sampleSize:document.getElementById('sf_sampleSize').value,
+    containers:document.getElementById('sf_containers').value,
+    sampler:document.getElementById('sf_sampler').value,
+    storage:document.getElementById('sf_storage').value,
+    samplingDate:document.getElementById('sf_date').value,
+    testingStatus:'Not Tested',
+  };
+  S.samples.push(sample);
+  m.samplingStatus='Sampled'; m.storageCondition=sample.storage;
+  closeModal('samplingFormOverlay');
+  S.currentSample=sample; openLabelPreview(sample);
+  renderSMTable(); updatePending();
+  showToast('Sample recorded successfully!','success');
+}
+
+// ═══════════════════════════════════════════
+//  SAMPLE LABELS
+// ═══════════════════════════════════════════
+function openLabelPreview(s){
+  document.getElementById('labelSub').textContent=`Sample ID: ${s.sampleId}  ·  ${s.materialName}`;
+  document.getElementById('labelContent').innerHTML=`<div class="label-wrap">${labelsHTML(s)}</div>`;
+  openModal('labelOverlay');
+}
+function labelsHTML(s){return `
+  <div class="label-card"><div class="label-card-hdr hdr-sample">
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>Sample Label
+  </div><div class="label-body">
+    <div class="ltitle">QC SAMPLE</div>
+    <div class="lrow"><span class="lkey">Sample ID</span><span class="lval">${s.sampleId}</span></div>
+    <div class="lrow"><span class="lkey">Material</span><span class="lval">${s.materialName}</span></div>
+    <div class="lrow"><span class="lkey">Supplier</span><span class="lval">${s.supplier||'—'}</span></div>
+    <div class="lrow"><span class="lkey">Supplier Batch</span><span class="lval">${s.supplierBatch}</span></div>
+    <hr class="ldivider">
+    <div class="lrow"><span class="lkey">Sample Size</span><span class="lval">${s.sampleSize} ${s.unit}</span></div>
+    <div class="lrow"><span class="lkey">Storage</span><span class="lval">${s.storage}</span></div>
+    <div class="lrow"><span class="lkey">Sampling Date</span><span class="lval">${fd(s.samplingDate)}</span></div>
+    <div class="lrow"><span class="lkey">Expiry Date</span><span class="lval">${fd(s.expDate)}</span></div>
+    <hr class="ldivider">
+    <div class="lrow"><span class="lkey">Sampled By</span><span class="lval">${s.sampler}</span></div>
+  </div></div>
+  <div class="label-card"><div class="label-card-hdr hdr-container">
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="9" y1="3" x2="9" y2="21"/></svg>Sampled Container Label
+  </div><div class="label-body">
+    <div class="ltitle">SAMPLED — QUARANTINE</div>
+    <div class="lrow"><span class="lkey">Receipt ID</span><span class="lval">${s.receiptId}</span></div>
+    <div class="lrow"><span class="lkey">Material</span><span class="lval">${s.materialName}</span></div>
+    <div class="lrow"><span class="lkey">Manufacturer</span><span class="lval">${s.manufacturer||'—'}</span></div>
+    <div class="lrow"><span class="lkey">Supplier Batch</span><span class="lval">${s.supplierBatch}</span></div>
+    <hr class="ldivider">
+    <div class="lrow"><span class="lkey">Containers Sampled</span><span class="lval">${s.containers}</span></div>
+    <div class="lrow"><span class="lkey">Sample Taken</span><span class="lval">${s.sampleSize} ${s.unit}</span></div>
+    <div class="lrow"><span class="lkey">Sampling Date</span><span class="lval">${fd(s.samplingDate)}</span></div>
+    <div class="lrow"><span class="lkey">Expiry Date</span><span class="lval">${fd(s.expDate)}</span></div>
+    <hr class="ldivider">
+    <div class="lrow"><span class="lkey">Location</span><span class="lval">${s.location||'—'}</span></div>
+    <div class="lrow"><span class="lkey">Sampled By</span><span class="lval">${s.sampler}</span></div>
+  </div></div>`;}
+function printLabels(){
+  const s=S.currentSample; if(!s) return;
+  printHTML(`<div class="label-wrap">${labelsHTML(s)}</div>`,labelPrintCSS());
+}
+function printHTML(content,css){
+  const pa=document.getElementById('printArea');
+  pa.style.display='block';
+  pa.innerHTML=`<style>${css}</style>${content}`;
+  window.print(); pa.style.display='none';
+}
+function labelPrintCSS(){return `
+  body{font-family:'DM Sans',sans-serif}
+  .label-wrap{display:flex;gap:20px;padding:20px;flex-wrap:wrap}
+  .label-card{flex:1;min-width:250px;border:1.5px solid #ccc;border-radius:8px;overflow:hidden;page-break-inside:avoid}
+  .label-card-hdr{padding:8px 13px;font-size:11px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:#fff;display:flex;align-items:center;gap:8px}
+  .hdr-sample{background:#2d6a4f}.hdr-container{background:#2563a8}.hdr-release{background:#6d28d9}
+  .label-body{padding:13px;font-family:monospace;font-size:11px;line-height:1.85}
+  .lrow{display:flex;gap:6px}.lkey{color:#888;min-width:130px;flex-shrink:0}.lval{font-weight:700;color:#111}
+  .ldivider{border:none;border-top:1px dashed #ddd;margin:7px 0}
+  .ltitle{font-size:12px;font-weight:700;text-align:center;letter-spacing:.08em;text-transform:uppercase;margin-bottom:9px;padding-bottom:7px;border-bottom:1px solid #eee}`;}
+
+// ═══════════════════════════════════════════
+//  SAMPLE HISTORY (Sampler)
+// ═══════════════════════════════════════════
+function renderHistory(){
+  const s=(document.getElementById('histSearch')?.value||'').toLowerCase();
+  const fl=S.samples.filter(x=>!s||x.materialName.toLowerCase().includes(s)||x.sampleId.toLowerCase().includes(s)||x.supplierBatch.toLowerCase().includes(s));
+  const tb=document.getElementById('histTableBody'), em=document.getElementById('histEmpty');
+  if(!fl.length){tb.innerHTML='';em.style.display='block';return;}
+  em.style.display='none';
+  tb.innerHTML=fl.map(s=>`<tr>
+    <td class="mono">${s.sampleId}</td><td><strong>${s.materialName}</strong></td>
+    <td class="mono">${s.receiptId}</td><td class="mono">${s.supplierBatch}</td>
+    <td>${s.sampleSize} ${s.unit}</td><td>${s.containers}</td><td>${s.sampler}</td>
+    <td>${fd(s.samplingDate)}</td><td style="font-size:12px">${s.storage}</td>
+    <td><button class="btn btn-info btn-sm" onclick="reprintLabels('${s.id}')"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>Print Labels</button></td>
+  </tr>`).join('');
+}
+function reprintLabels(sid){const s=S.samples.find(x=>x.id===sid);if(!s)return;S.currentSample=s;openLabelPreview(s);}
+
+// ═══════════════════════════════════════════
+//  ANALYST – SAMPLES
+// ═══════════════════════════════════════════
+function renderAnalystSamples(){
+  const s=(document.getElementById('anSamplesSearch')?.value||'').toLowerCase();
+  const sf=document.getElementById('anSamplesFilter')?.value||'';
+  // Combine raw material samples + product samples + packaging samples
+  const allSamples=[
+    ...S.samples.map(x=>({...x,_src:'rm'})),
+    ...S.fpSamples.map(x=>({
+      id:x.id, sampleId:x.sampleId, _src:'fp',
+      materialName:x.productName+' ('+x.productType+')',
+      receiptId:x.sampleId, supplierBatch:x.batchNo||'—',
+      receiptDate:x.samplingDate, sampleSize:x.sampleSize, unit:x.unit||'',
+      containers:'1', sampler:'—', samplingDate:x.samplingDate,
+      expDate:x.expDate, testingStatus:x.testingStatus||'Not Tested',
+      sampleType:x.productType,
+    }))
+  ];
+  const fl=allSamples.filter(x=>{
+    const ms=!s||x.materialName.toLowerCase().includes(s)||x.receiptId.toLowerCase().includes(s);
+    return ms&&(!sf||x.testingStatus===sf);
+  });
+  const tb=document.getElementById('anSamplesBody'), em=document.getElementById('anSamplesEmpty');
+  if(!fl.length){tb.innerHTML='';em.style.display='block';return;}
+  em.style.display='none';
+  tb.innerHTML=fl.map(s=>{
+    const canTest=s.testingStatus==='Not Tested';
+    const inTest=s.testingStatus==='In Testing';
+    const typeLabel=s.sampleType?`<br><span style="font-size:10px;background:var(--surface2);border:1px solid var(--border);border-radius:3px;padding:1px 5px;color:var(--text3)">${s.sampleType}</span>`:'';
+    return `<tr>
+      <td class="mono">${s.receiptId}</td>
+      <td><strong>${s.materialName}</strong>${typeLabel}</td>
+      <td class="mono">${s.supplierBatch}</td><td>${fd(s.receiptDate)}</td>
+      <td>${s.sampleSize||'—'} ${s.unit||''}</td><td>${s.containers||'—'}</td>
+      <td>${fd(s.samplingDate)}</td><td>${s.sampler||'—'}</td><td>${fd(s.expDate)}</td>
+      <td>${testBadge(s.testingStatus)}</td>
+      <td><div class="action-group">
+        ${canTest?`<button class="btn btn-primary btn-sm" onclick="startTesting('${s.id}','${s._src||'rm'}')"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>Start Testing</button>`:''}
+        ${inTest?`<button class="btn btn-warning btn-sm" onclick="startTesting('${s.id}','${s._src||'rm'}')"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/></svg>Continue COA</button>`:''}
+        ${s.testingStatus==='Completed'?`<span style="font-size:12px;color:var(--text3)">COA Created</span>`:''}
+      </div></td>
+    </tr>`;
+  }).join('');
+}
+
+function startTesting(sampleId, src){
+  // Find sample from correct source
+  let s = src==='fp' ? S.fpSamples.find(x=>x.id===sampleId) : S.samples.find(x=>x.id===sampleId);
+  if(!s) return;
+  // Check if COA already exists
+  const existing=S.coas.find(c=>c.sampleId===sampleId);
+  if(existing){openCOAView(existing.id,'analyst');return;}
+  // Resolve material record if available
+  const m=S.materials.find(x=>x.id===s.materialId);
+  s.testingStatus='In Testing';
+  // Auto-fill COA form from sample/product data
+  const sName = src==='fp' ? (s.productName+' ('+s.productType+')') : s.materialName;
+  const sBatch = src==='fp' ? (s.batchNo||'—') : (s.supplierBatch||'—');
+  const sBatchSize = src==='fp' ? (s.batchSize+' '+(s.unit||'')) : ((m?.batchSize||s.sampleSize||'—')+' '+(s.unit||''));
+  const sMfgDate = src==='fp' ? fd(s.mfgDate||'') : fd(s.mfgDate||m?.mfgDate||'');
+  const sExpDate = src==='fp' ? fd(s.expDate||'') : fd(s.expDate||'');
+  const sReceived = src==='fp' ? fd(s.samplingDate||'') : fd(s.receiptDate||'');
+  document.getElementById('coa_sampleName').value=sName;
+  document.getElementById('coa_batchNo').value=sBatch;
+  document.getElementById('coa_batchSize').value=sBatchSize;
+  document.getElementById('coa_supplier').value=s.supplier||m?.supplier||'—';
+  document.getElementById('coa_manufacturer').value=s.manufacturer||m?.manufacturer||'—';
+  document.getElementById('coa_mfgDate').value=sMfgDate;
+  document.getElementById('coa_expDate').value=sExpDate;
+  document.getElementById('coa_receivedDate').value=sReceived;
+  document.getElementById('coa_specsCode').value='';
+  document.getElementById('coa_reference').value='';
+  document.getElementById('coa_analyst').value='';
+  document.getElementById('coa_analysisDate').value=td();
+  document.getElementById('coa_remarks').value='';
+  document.getElementById('coaFormSub').textContent=`${s.sampleId||s.receiptId}  ·  ${sName}`;
+  document.getElementById('coaFormOverlay').dataset.sampleId=sampleId;
+  document.getElementById('coaFormOverlay').dataset.sampleSrc=src||'rm';
+  openModal('coaFormOverlay');
+  renderAnalystSamples();
+}
+
+function submitCOA(){
+  const req={coa_specsCode:'Specs Code',coa_reference:'Reference',coa_analyst:'Analyst Name'};
+  for(const [id,lbl] of Object.entries(req)){const el=document.getElementById(id);if(!el||!el.value.trim()){showToast(lbl+' is required.','error');el&&el.focus();return;}}
+  const sampleId=document.getElementById('coaFormOverlay').dataset.sampleId;
+  const sampleSrc=document.getElementById('coaFormOverlay').dataset.sampleSrc||'rm';
+  const s=sampleSrc==='fp' ? S.fpSamples.find(x=>x.id===sampleId) : S.samples.find(x=>x.id===sampleId);
+  if(!s) return;
+  const coaId='COA-'+new Date().getFullYear()+'-'+String(S.coaCounter).padStart(4,'0');
+  const coa={
+    id:coaId, sampleId:sampleId, materialId:s.materialId,
+    receiptId:s.receiptId,
+    sampleName:document.getElementById('coa_sampleName').value,
+    batchNo:document.getElementById('coa_batchNo').value,
+    batchSize:document.getElementById('coa_batchSize').value,
+    supplier:document.getElementById('coa_supplier').value,
+    manufacturer:document.getElementById('coa_manufacturer').value,
+    mfgDate:document.getElementById('coa_mfgDate').value,
+    expDate:document.getElementById('coa_expDate').value,
+    receivedDate:document.getElementById('coa_receivedDate').value,
+    specsCode:document.getElementById('coa_specsCode').value,
+    reference:document.getElementById('coa_reference').value,
+    analyst:document.getElementById('coa_analyst').value,
+    analysisDate:document.getElementById('coa_analysisDate').value,
+    remarks:document.getElementById('coa_remarks').value,
+    status:'Draft', createdDate:td(), qcManagerComment:'',
+  };
+  S.coas.push(coa); S.coaCounter++;
+  s.testingStatus='Completed';
+  closeModal('coaFormOverlay');
+  openCOAView(coaId,'analyst');
+  renderAnalystSamples();
+  if(sampleSrc==='fp'){renderFPSamples(); renderProdHistory();}
+  showToast('COA created successfully!','success');
+}
+
+// ═══════════════════════════════════════════
+//  COA VIEW
+// ═══════════════════════════════════════════
+function openCOAView(coaId, role){
+  const c=S.coas.find(x=>x.id===coaId); if(!c) return;
+  S.currentCOAId=coaId;
+  document.getElementById('coaViewTitle').textContent='Certificate of Analysis';
+  document.getElementById('coaViewSub').textContent=`${c.id}  ·  ${c.sampleName}`;
+  document.getElementById('coaViewBody').innerHTML=buildCOAHTML(c);
+
+  // Footer actions depending on role and status
+  const footer=document.getElementById('coaViewFooter');
+  let btns=`<button class="btn btn-secondary" onclick="closeModal('coaViewOverlay')">Close</button>`;
+  if(role==='analyst'){
+    if(c.status==='Draft')
+      btns+=`<button class="btn btn-primary" onclick="updateCOAStatus('${c.id}','In Progress')"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>Submit for Review</button>`;
+    if(c.status==='In Progress')
+      btns+=`<button class="btn btn-warning" onclick="updateCOAStatus('${c.id}','Completed')"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>Mark Completed</button>`;
+  }
+  if(role==='qcm'&&c.status==='Completed'){
+    btns+=`<button class="btn btn-danger" onclick="qcmReviewAction('${c.id}','Rejected')">Reject</button>`;
+    btns+=`<button class="btn btn-primary" onclick="qcmReviewAction('${c.id}','Approved')"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>Approve COA</button>`;
+  }
+  footer.innerHTML=btns;
+  openModal('coaViewOverlay');
+}
+
+function buildCOAHTML(c){
+  const statusColors={Draft:'badge-draft','In Progress':'badge-inprogress',Completed:'badge-completed',Approved:'badge-approved',Rejected:'badge-rejected'};
+  return `
+  <div class="coa-header">
+    <div class="coa-title">CERTIFICATE OF ANALYSIS</div>
+    <div class="coa-sub">${c.id}  ·  Issued: ${fd(c.createdDate)}</div>
+  </div>
+  <div class="coa-grid">
+    <div class="coa-section-title">Material &amp; Sample Details</div>
+    ${cr('Sample Name',c.sampleName)}${cr('Batch No.',c.batchNo,true)}
+    ${cr('Batch Size',c.batchSize)}${cr('Supplier',c.supplier)}
+    ${cr('Manufacturer',c.manufacturer)}${cr('Manufacturing Date',c.mfgDate)}
+    ${cr('Expiry Date',c.expDate)}${cr('Received Date',c.receivedDate)}
+    <div class="coa-section-title">Specifications &amp; Reference</div>
+    ${cr('Specs Code',c.specsCode,true)}${cr('Reference',c.reference)}
+    ${cr('Analyst',c.analyst)}${cr('Analysis Date',fd(c.analysisDate))}
+    ${c.remarks?`<div style="grid-column:1/-1">${cr('Remarks',c.remarks)}</div>`:''}
+  </div>
+  <div class="coa-badge-row">
+    <div><span style="font-size:12px;color:var(--text3)">COA Status: </span><span class="badge ${statusColors[c.status]||'badge-draft'}"><span class="badge-dot"></span>${c.status}</span></div>
+    ${c.qcManagerComment?`<div style="font-size:12px;color:var(--text2)"><strong>QC Comment:</strong> ${c.qcManagerComment}</div>`:''}
+  </div>`;}
+function cr(k,v,mono=false){return `<div><div class="coa-key">${k}</div><div class="coa-val ${mono?'mono':''}">${v||'—'}</div></div>`;}
+
+function updateCOAStatus(coaId, newStatus){
+  const c=S.coas.find(x=>x.id===coaId); if(!c) return;
+  c.status=newStatus;
+  closeModal('coaViewOverlay');
+  renderCerts('analyst'); refreshAnalystBadges();
+  showToast(`COA status updated to "${newStatus}"`,'success');
+}
+
+// ═══════════════════════════════════════════
+//  CERTIFICATES LIST
+// ═══════════════════════════════════════════
+function renderCerts(role){
+  const isQCM=role==='qcm';
+  const searchId=isQCM?'qcmCertsSearch':'anCertsSearch';
+  const filterId=isQCM?'qcmCertsFilter':'anCertsFilter';
+  const bodyId=isQCM?'qcmCertsBody':'anCertsBody';
+  const emptyId=isQCM?'qcmCertsEmpty':'anCertsEmpty';
+  const s=(document.getElementById(searchId)?.value||'').toLowerCase();
+  const sf=document.getElementById(filterId)?.value||'';
+  const fl=S.coas.filter(c=>{
+    const ms=!s||c.sampleName.toLowerCase().includes(c)||c.receiptId.toLowerCase().includes(s)||c.sampleName.toLowerCase().includes(s)||c.batchNo.toLowerCase().includes(s);
+    return ms&&(!sf||c.status===sf);
+  });
+  const tb=document.getElementById(bodyId), em=document.getElementById(emptyId);
+  if(!fl.length){tb.innerHTML='';em.style.display='block';return;}
+  em.style.display='none';
+  const statusColors={Draft:'badge-draft','In Progress':'badge-inprogress',Completed:'badge-completed',Approved:'badge-approved',Rejected:'badge-rejected'};
+  tb.innerHTML=fl.map(c=>`<tr>
+    <td class="mono">${c.receiptId}</td><td><strong>${c.sampleName}</strong></td>
+    <td class="mono">${c.batchNo}</td><td>${c.analyst}</td><td>${fd(c.createdDate)}</td>
+    <td><span class="badge ${statusColors[c.status]||'badge-draft'}"><span class="badge-dot"></span>${c.status}</span></td>
+    <td><button class="btn btn-secondary btn-sm" onclick="openCOAView('${c.id}','${role}')">
+      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>View
+    </button></td>
+  </tr>`).join('');
+}
+
+// ═══════════════════════════════════════════
+//  QC MANAGER – APPROVE / REJECT
+// ═══════════════════════════════════════════
+function qcmReviewAction(coaId, action){
+  const c=S.coas.find(x=>x.id===coaId); if(!c) return;
+  S.currentCOAId=coaId;
+  document.getElementById('qcmActionTitle').textContent=action==='Approved'?'Approve COA':'Reject COA';
+  document.getElementById('qcmActionSub').textContent=`${c.id}  ·  ${c.sampleName}`;
+  document.getElementById('qcmActionInfo').innerHTML=`
+    <div class="confirm-row"><span>COA ID</span><span class="mono">${c.id}</span></div>
+    <div class="confirm-row"><span>Sample Name</span><span>${c.sampleName}</span></div>
+    <div class="confirm-row"><span>Batch No.</span><span class="mono">${c.batchNo}</span></div>
+    <div class="confirm-row"><span>Analyst</span><span>${c.analyst}</span></div>`;
+  document.getElementById('qcmActionNote').textContent=action==='Approved'
+    ?"Approving this COA will prompt you to release the material and assign a QC number."
+    :"Rejecting this COA will notify the analyst and mark the material as rejected.";
+  document.getElementById('qcmComment').value='';
+  const footer=document.getElementById('qcmActionFooter');
+  footer.innerHTML=`
+    <button class="btn btn-secondary" onclick="closeModal('qcmActionOverlay')">Cancel</button>
+    ${action==='Approved'
+      ?`<button class="btn btn-primary" onclick="finalizeQCMAction('Approved')"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>Confirm Approval</button>`
+      :`<button class="btn btn-danger" onclick="finalizeQCMAction('Rejected')">Confirm Rejection</button>`}`;
+  closeModal('coaViewOverlay');
+  openModal('qcmActionOverlay');
+}
+
+function finalizeQCMAction(action){
+  const c=S.coas.find(x=>x.id===S.currentCOAId); if(!c) return;
+  c.status=action;
+  c.qcManagerComment=document.getElementById('qcmComment').value;
+  closeModal('qcmActionOverlay');
+  if(action==='Approved') openReleaseModal(c);
+  else{
+    const m=c.materialId?S.materials.find(x=>x.id===c.materialId):null;
+    if(m) m.status='Rejected';
+    renderCerts('qcm');
+    showToast('COA Rejected.','error');
+  }
+}
+
+// ═══════════════════════════════════════════
+//  RELEASE MODAL
+// ═══════════════════════════════════════════
+function openReleaseModal(c){
+  S.currentReleaseCOAId=c.id;
+  document.getElementById('releaseMaterialName').textContent=c.sampleName;
+  document.getElementById('releaseMaterialSub').textContent=`Receipt: ${c.receiptId}  ·  Batch: ${c.batchNo}`;
+  document.getElementById('releaseQCNum').value='QC-'+new Date().getFullYear()+'-'+String(S.coaCounter).padStart(4,'0');
+  // Auto-calculate retest date: release date + 1 year
+  const _rd=new Date(); const _rt=new Date(_rd); _rt.setFullYear(_rt.getFullYear()+1);
+  const _rtStr=_rt.toISOString().split('T')[0];
+  const _p=_rtStr.split('-'); const _rtFmt=_p[2]+'/'+_p[1]+'/'+_p[0];
+  document.getElementById('releaseRetestDate').value=_rtFmt;
+  document.getElementById('releaseRetestDate').dataset.raw=_rtStr;
+  document.getElementById('releaseQCSign').value='';
+  openModal('releaseOverlay');
+}
+
+function submitRelease(){
+  const qcNum=document.getElementById('releaseQCNum').value.trim();
+  const qcSign=document.getElementById('releaseQCSign').value.trim();
+  if(!qcNum){showToast('QC Number is required.','error');return;}
+  if(!qcSign){showToast('QC Manager Signature is required.','error');return;}
+  const c=S.coas.find(x=>x.id===S.currentReleaseCOAId); if(!c) return;
+  const m=S.materials.find(x=>x.id===c.materialId);
+  const s=S.samples.find(x=>x.materialId===c.materialId);
+  // Retest date is auto-calculated (release date + 1 year), stored as raw ISO string
+  const retestRaw=document.getElementById('releaseRetestDate').dataset.raw||'';
+  const releasedToday=td();
+  if(m){
+    m.status='Released'; m.qcNumber=qcNum; m.qcSign=qcSign;
+    m.retestDate=retestRaw;
+    m.releasedDate=releasedToday;
+  }
+  // Create notification for storekeeper
+  S.notifications.push({
+    id:'NOTIF-'+Date.now(), target:'storekeeper', read:false,
+    title:`Material Released: ${c.sampleName}`,
+    message:`Receipt ID: ${c.receiptId}  ·  QC No: ${qcNum}  ·  Retest by: ${document.getElementById('releaseRetestDate').value}  ·  Please move to released warehouse and print release label.`,
+  });
+  // Store release data for label
+  S.currentReleaseLabelMat=m?{...m,qcNumber:qcNum,qcSign,retestDate:retestRaw,storageCondition:s?.storage||m.storageCondition||'—'}:null;
+  closeModal('releaseOverlay');
+  renderCerts('qcm');
+  showToast('Material released! Storekeeper has been notified.','success');
+}
+
+// ═══════════════════════════════════════════
+//  RELEASE LABEL
+// ═══════════════════════════════════════════
+function openReleaseLabel(matId){
+  const m=S.materials.find(x=>x.id===matId); if(!m||m.status!=='Released') return;
+  const s=S.samples.find(x=>x.materialId===matId);
+  const labelData={
+    receiptId:m.receiptId, materialName:m.materialName, batchNo:m.supplierBatch,
+    batchSize:(m.batchSize||'—')+' '+(m.unit||''), supplier:m.supplier,
+    mfgDate:fd(m.mfgDate), expDate:fd(m.expDate),
+    containerNo:s?.containers||'—',
+    qcNumber:m.qcNumber||'—', storageCondition:s?.storage||m.storageCondition||'—',
+    retestDate:fd(m.retestDate||''), qcSign:m.qcSign||'—', releaseDate:fd(m.releasedDate||td()),
+  };
+  document.getElementById('releaseLabelSub').textContent=`${m.receiptId}  ·  ${m.materialName}`;
+  document.getElementById('releaseLabelContent').innerHTML=`<div class="label-wrap">${releaseLabelHTML(labelData)}</div>`;
+  S.currentReleaseLabelData=labelData;
+  openModal('releaseLabelOverlay');
+}
+function releaseLabelHTML(d){return `
+  <div class="label-card" style="flex:1;min-width:300px">
+    <div class="label-card-hdr hdr-release">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+      RELEASED — QC APPROVED
+    </div>
+    <div class="label-body">
+      <div class="ltitle">RELEASED MATERIAL LABEL</div>
+      <div class="lrow"><span class="lkey">Receipt ID</span><span class="lval">${d.receiptId}</span></div>
+      <div class="lrow"><span class="lkey">Material Name</span><span class="lval">${d.materialName}</span></div>
+      <div class="lrow"><span class="lkey">Batch No.</span><span class="lval">${d.batchNo}</span></div>
+      <div class="lrow"><span class="lkey">Batch Size</span><span class="lval">${d.batchSize}</span></div>
+      <div class="lrow"><span class="lkey">Supplier</span><span class="lval">${d.supplier||'—'}</span></div>
+      <hr class="ldivider">
+      <div class="lrow"><span class="lkey">Mfg. Date</span><span class="lval">${d.mfgDate}</span></div>
+      <div class="lrow"><span class="lkey">Exp. Date</span><span class="lval">${d.expDate}</span></div>
+      <div class="lrow"><span class="lkey">Container No.</span><span class="lval">${d.containerNo}</span></div>
+      <div class="lrow"><span class="lkey">QC Number</span><span class="lval">${d.qcNumber}</span></div>
+      <hr class="ldivider">
+      <div class="lrow"><span class="lkey">Storage Condition</span><span class="lval">${d.storageCondition}</span></div>
+      <div class="lrow"><span class="lkey">Date of Retesting</span><span class="lval">${d.retestDate||'—'}</span></div>
+      <div class="lrow"><span class="lkey">QC Signature</span><span class="lval">${d.qcSign}</span></div>
+      <div class="lrow"><span class="lkey">Release Date</span><span class="lval">${d.releaseDate}</span></div>
+    </div>
+  </div>`;}
+function printReleaseLabel(){
+  if(!S.currentReleaseLabelData) return;
+  printHTML(`<div class="label-wrap">${releaseLabelHTML(S.currentReleaseLabelData)}</div>`,labelPrintCSS());
+}
+
+// ═══════════════════════════════════════════
+//  ADD OPTION POPOVER
+// ═══════════════════════════════════════════
+let _aoKey=null,_aoSel=null;
+function openAO(key,selId,btn){
+  _aoKey=key; _aoSel=selId;
+  const labels={materialName:'Add Material Name',category:'Add Category',supplier:'Add Supplier',manufacturer:'Add Manufacturer',unit:'Add Unit',packageType:'Add Package Type',warehouse:'Add Warehouse'};
+  document.getElementById('aoLabel').textContent=labels[key]||'Add Option';
+  document.getElementById('aoInput').value='';
+  const box=document.getElementById('aoBox'), rect=btn.getBoundingClientRect();
+  box.style.top=(rect.bottom+window.scrollY+6)+'px';
+  box.style.left=Math.min(rect.left+window.scrollX,window.innerWidth-270)+'px';
+  box.classList.add('open');
+  setTimeout(()=>document.getElementById('aoInput').focus(),50);
+}
+function confirmAO(){
+  const v=document.getElementById('aoInput').value.trim(); if(!v) return;
+  if(!S.opts[_aoKey].includes(v)) S.opts[_aoKey].push(v);
+  fillSelects(); const sel=document.getElementById(_aoSel); if(sel) sel.value=v;
+  document.getElementById('aoBox').classList.remove('open');
+  showToast(`"${v}" added.`,'success');
+}
+document.addEventListener('click',e=>{
+  const box=document.getElementById('aoBox');
+  if(box.classList.contains('open')&&!box.contains(e.target)&&!e.target.classList.contains('btn-icon')) box.classList.remove('open');
+});
+document.getElementById('aoInput').addEventListener('keydown',e=>{
+  if(e.key==='Enter')confirmAO(); if(e.key==='Escape')document.getElementById('aoBox').classList.remove('open');
+});
+
+// ═══════════════════════════════════════════
+//  MODAL HELPERS
+// ═══════════════════════════════════════════
+function openModal(id){document.getElementById(id).classList.add('open');document.body.style.overflow='hidden';}
+function closeModal(id){document.getElementById(id).classList.remove('open');document.body.style.overflow='';}
+document.querySelectorAll('.overlay').forEach(el=>{el.addEventListener('click',e=>{if(e.target===el)closeModal(el.id);});});
+
+// ═══════════════════════════════════════════
+//  TOAST
+// ═══════════════════════════════════════════
+function showToast(msg,type='info'){
+  const c=document.getElementById('toastContainer');
+  const t=document.createElement('div'); t.className='toast '+type;
+  t.innerHTML=`<span>${{success:'✓',error:'✕',info:'ℹ',warning:'⚠'}[type]||'ℹ'}</span><span>${msg}</span>`;
+  c.appendChild(t); setTimeout(()=>t.remove(),3800);
+}
+
+// ═══════════════════════════════════════════
+//  BADGES & HELPERS
+// ═══════════════════════════════════════════
+function sBadge(s){const m={Quarantine:'badge-quarantine',Released:'badge-released',Rejected:'badge-rejected'};return `<span class="badge ${m[s]||'badge-notsampled'}"><span class="badge-dot"></span>${s||'—'}</span>`;}
+function ssBadge(s){const m={'Not Sampled':'badge-notsampled','Sampling Requested':'badge-requested','Sampled':'badge-sampled'};return `<span class="badge ${m[s]||'badge-notsampled'}"><span class="badge-dot"></span>${s||'—'}</span>`;}
+function testBadge(s){const m={'Not Tested':'badge-nottested','In Testing':'badge-intesting','Completed':'badge-completed'};return `<span class="badge ${m[s]||'badge-nottested'}"><span class="badge-dot"></span>${s||'—'}</span>`;}
+function fd(d){if(!d)return '—';const p=d.split('-');return p.length===3?`${p[2]}/${p[1]}/${p[0]}`:d;}
+function td(){return new Date().toISOString().split('T')[0];}
+
+renderSKStats();
+</script>
+</body>
+</html>
