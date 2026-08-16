@@ -1,0 +1,45 @@
+version: '3.8'
+services:
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_DB: rm_rrs
+      POSTGRES_USER: rm_rrs_user
+      POSTGRES_PASSWORD: securepassword
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+
+  backend:
+    build: ./backend
+    depends_on: [postgres, redis]
+    environment:
+      - DATABASE_URL=postgresql://rm_rrs_user:securepassword@postgres:5432/rm_rrs
+      - REDIS_URL=redis://redis:6379/0
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend:/app
+
+  celery:
+    build: ./backend
+    command: celery -A config worker --loglevel=info
+    depends_on: [redis, postgres]
+    environment:
+      - DATABASE_URL=postgresql://rm_rrs_user:securepassword@postgres:5432/rm_rrs
+      - REDIS_URL=redis://redis:6379/0
+
+  frontend:
+    build: ./frontend
+    ports:
+      - "80:80"
+    depends_on: [backend]
+
+volumes:
+  postgres_data:

@@ -1,0 +1,1 @@
+export function Toolbar({search,setSearch,placeholder="Search…",children}) { return <div className="table-toolbar"><div className="search-box">⌕<input value={search} onChange={e=>setSearch(e.target.value)} placeholder={placeholder}/></div>{children}</div> }

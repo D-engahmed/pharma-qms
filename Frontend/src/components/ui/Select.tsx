@@ -1,0 +1,1 @@
+export function Select({value,onChange,options}) { return <select value={value??""} onChange={e=>onChange(e.target.value)}><option value="">Select…</option>{options.map(x=><option key={x}>{x}</option>)}</select> }

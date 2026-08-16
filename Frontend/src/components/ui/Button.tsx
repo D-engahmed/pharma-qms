@@ -1,0 +1,1 @@
+export function Button({children,variant="secondary",small=false,onClick,disabled=false}) { return <button className={`btn btn-${variant} ${small?"btn-sm":""}`} onClick={onClick} disabled={disabled}>{children}</button> }

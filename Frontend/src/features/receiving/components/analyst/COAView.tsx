@@ -1,0 +1,8 @@
+import { useState } from 'react';
+import { Badge, Status, Button, Modal, Field, Input, Select, Table, Empty } from '../../../../components/ui';
+import { Tabs, Page, Toolbar } from '../../../../components/layout';
+import { Detail } from '../shared/Detail';
+import { formatDate as fmt, today, createDocumentId as id } from '../../../../utils';
+export function COAView({c,close,open,state,update,notify}) {
+  return <Modal title="Certificate of Analysis" sub={`${c.id} · ${c.sampleName}`} open onClose={close} wide footer={<><Button onClick={close}>Close</Button>{c.status==="Draft"&&<Button variant="primary" onClick={()=>{update(s=>{s.coas.find(x=>x.id===c.id).status="In Progress"});close();notify("COA submitted for review")}}>Submit for Review</Button>}{c.status==="In Progress"&&<Button variant="warning" onClick={()=>{update(s=>{s.coas.find(x=>x.id===c.id).status="Completed"});close();notify("COA marked completed")}}>Mark Completed</Button>}{c.status==="Completed"&&<Button variant="primary" onClick={()=>open("qcm")}>QC Review</Button>}</>}><div className="coa-header"><b>CERTIFICATE OF ANALYSIS</b><small>{c.id} · Issued {fmt(c.createdDate)}</small></div><Detail title="Material & Sample Details" rows={[["Sample Name",c.sampleName],["Batch No.",c.batchNo],["Batch Size",c.batchSize],["Supplier",c.supplier],["Manufacturer",c.manufacturer],["Manufacturing Date",fmt(c.mfgDate)],["Expiry Date",fmt(c.expDate)],["Received Date",fmt(c.receivedDate)]]}/><Detail title="Specifications & Reference" rows={[["Specs Code",c.specsCode],["Reference",c.reference],["Analyst",c.analyst],["Analysis Date",fmt(c.analysisDate)],["Status",<Status value={c.status}/>],["Remarks",c.remarks]]}/></Modal>
+}
