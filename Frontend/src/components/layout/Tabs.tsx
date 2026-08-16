@@ -1,0 +1,1 @@
+export function Tabs({items,value,onChange}) { return <nav className="tab-bar">{items.map(([k,label,badge])=><button key={k} className={`tab-btn ${value===k?"active":""}`} onClick={()=>onChange(k)}>{label}{badge!==undefined&&<span className="tab-badge">{badge}</span>}</button>)}</nav> }

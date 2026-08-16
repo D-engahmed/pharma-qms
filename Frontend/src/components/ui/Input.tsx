@@ -1,0 +1,1 @@
+export function Input({value,onChange,type="text",placeholder="",readOnly=false}) { return <input type={type} value={value??""} onChange={e=>onChange?.(e.target.value)} placeholder={placeholder} readOnly={readOnly}/> }
