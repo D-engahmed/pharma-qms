@@ -4,7 +4,7 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from django.db import transaction
 from apps.common.mixins import AuditMixin
-from apps.users.permissions import HasPermission
+from apps.users.permissions import permission_required
 from apps.audit.services import log_audit
 from apps.esignature.models import ElectronicSignature
 from apps.esignature.services import create_signature
@@ -18,17 +18,17 @@ class COAViewSet(AuditMixin, viewsets.ModelViewSet):
 
     def get_permissions(self):
         if self.action in ['list', 'retrieve']:
-            self.permission_classes = [IsAuthenticated, HasPermission('certificate.view')]
+            self.permission_classes = [IsAuthenticated, permission_required('certificate.view')]
         elif self.action == 'create':
-            self.permission_classes = [IsAuthenticated, HasPermission('certificate.create')]
+            self.permission_classes = [IsAuthenticated, permission_required('certificate.create')]
         elif self.action == 'submit':
-            self.permission_classes = [IsAuthenticated, HasPermission('certificate.submit_for_review')]
+            self.permission_classes = [IsAuthenticated, permission_required('certificate.submit_for_review')]
         elif self.action == 'complete':
-            self.permission_classes = [IsAuthenticated, HasPermission('certificate.review')]
+            self.permission_classes = [IsAuthenticated, permission_required('certificate.review')]
         elif self.action in ['approve', 'reject']:
-            self.permission_classes = [IsAuthenticated, HasPermission('certificate.approve')]
+            self.permission_classes = [IsAuthenticated, permission_required('certificate.approve')]
         else:
-            self.permission_classes = [IsAuthenticated, HasPermission('certificate.view')]
+            self.permission_classes = [IsAuthenticated, permission_required('certificate.view')]
         return super().get_permissions()
 
     @action(detail=True, methods=['post'])

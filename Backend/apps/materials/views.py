@@ -7,7 +7,7 @@ from django.utils.timezone import now
 from datetime import timedelta
 
 from apps.common.mixins import AuditMixin
-from apps.users.permissions import HasPermission
+from apps.users.permissions import permission_required
 from apps.audit.services import log_audit
 from apps.notifications.services import create_notification
 
@@ -29,23 +29,23 @@ class MaterialViewSet(AuditMixin, viewsets.ModelViewSet):
         Assign different permissions based on the action.
         """
         if self.action == 'list':
-            self.permission_classes = [IsAuthenticated, HasPermission('receiving.view')]
+            self.permission_classes = [IsAuthenticated, permission_required('receiving.view')]
         elif self.action == 'retrieve':
-            self.permission_classes = [IsAuthenticated, HasPermission('receiving.view')]
+            self.permission_classes = [IsAuthenticated, permission_required('receiving.view')]
         elif self.action == 'create':
-            self.permission_classes = [IsAuthenticated, HasPermission('receiving.create')]
+            self.permission_classes = [IsAuthenticated, permission_required('receiving.create')]
         elif self.action in ['update', 'partial_update']:
-            self.permission_classes = [IsAuthenticated, HasPermission('receiving.edit')]
+            self.permission_classes = [IsAuthenticated, permission_required('receiving.edit')]
         elif self.action == 'destroy':
             # Usually we don't delete materials; we soft-deactivate or handle via status.
             # For now, allow only admin to delete (if needed)
-            self.permission_classes = [IsAuthenticated, HasPermission('receiving.edit')]
+            self.permission_classes = [IsAuthenticated, permission_required('receiving.edit')]
         elif self.action == 'request_sampling':
-            self.permission_classes = [IsAuthenticated, HasPermission('receiving.request_sampling')]
+            self.permission_classes = [IsAuthenticated, permission_required('receiving.request_sampling')]
         elif self.action == 'release':
-            self.permission_classes = [IsAuthenticated, HasPermission('material.release')]
+            self.permission_classes = [IsAuthenticated, permission_required('material.release')]
         else:
-            self.permission_classes = [IsAuthenticated, HasPermission('receiving.view')]
+            self.permission_classes = [IsAuthenticated, permission_required('receiving.view')]
         return super().get_permissions()
 
     # ---------- Serializer selection ----------

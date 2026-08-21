@@ -110,7 +110,12 @@ class Employee(AbstractBaseUser, PermissionsMixin):
     # rows before this migration will apply.
     department = models.ForeignKey(Department, on_delete=models.PROTECT)
 
-    roles = models.ManyToManyField(Role, through=UserRole, related_name='users')
+    # through_fields is required because UserRole has two FKs to Employee
+    # (user, assigned_by) — without it Django can't tell which one is the
+    # M2M's "this side" link (fields.E334).
+    roles = models.ManyToManyField(
+        Role, through=UserRole, through_fields=('user', 'role'), related_name='users'
+    )
 
     # Legacy fields — kept for compatibility. apps/audit's AuditLogSerializer
     # still reads `user.full_name` directly (never populated by anything, so

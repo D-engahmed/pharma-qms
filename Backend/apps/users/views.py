@@ -16,7 +16,7 @@ from .serializers import (
     DepartmentSerializer, RoleSerializer, RoleCreateUpdateSerializer,
     PermissionSerializer
 )
-from .permissions import HasPermission
+from .permissions import permission_required
 from apps.audit.services import log_audit
 from apps.session.models import UserSession
 
@@ -24,10 +24,18 @@ from apps.session.models import UserSession
 def _get_client_ip(request):
     # Was duplicated (and in LogoutView's case, stubbed to `pass` -> always
     # None) across LoginView/LogoutView. One implementation now.
-    x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
-    if x_forwarded_for:
-        return x_forwarded_for.split(',')[0]
-    return request.META.get('REMOTE_ADDR')
+    #
+    # X-Forwarded-For is only trusted when REMOTE_ADDR is a known proxy
+    # (settings.TRUSTED_PROXIES) — otherwise any client can spoof the IP
+    # that ends up in LOGIN_SUCCESS/LOGIN_FAILURE audit rows. Mirrors
+    # apps.audit.middleware.AuditMiddleware.get_client_ip.
+    remote_addr = request.META.get('REMOTE_ADDR')
+    trusted_proxies = getattr(settings, 'TRUSTED_PROXIES', [])
+    if remote_addr in trusted_proxies:
+        x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
+        if x_forwarded_for:
+            return x_forwarded_for.split(',')[0].strip()
+    return remote_addr
 
 
 # ---------- Authentication Views ----------
@@ -150,7 +158,7 @@ class MeView(APIView):
 # ---------- Employee ViewSet ----------
 class UserViewSet(viewsets.ModelViewSet):
     queryset = Employee.objects.all().order_by('-created_at')
-    permission_classes = [IsAuthenticated, HasPermission('users.view')]
+    permission_classes = [IsAuthenticated, permission_required('users.view')]
 
     def get_serializer_class(self):
         if self.action == 'create':
@@ -176,7 +184,7 @@ class UserViewSet(viewsets.ModelViewSet):
             'roles': 'users.edit',  # spec names no dedicated permission for this
         }
         required_permission = action_permission_map.get(self.action, 'users.view')
-        self.permission_classes = [IsAuthenticated, HasPermission(required_permission)]
+        self.permission_classes = [IsAuthenticated, permission_required(required_permission)]
         return super().get_permissions()
 
     def perform_create(self, serializer):
@@ -310,7 +318,7 @@ class UserViewSet(viewsets.ModelViewSet):
 class DepartmentViewSet(viewsets.ModelViewSet):
     queryset = Department.objects.all()
     serializer_class = DepartmentSerializer
-    permission_classes = [IsAuthenticated, HasPermission('departments.view')]
+    permission_classes = [IsAuthenticated, permission_required('departments.view')]
 
     def get_permissions(self):
         action_permission_map = {
@@ -322,7 +330,7 @@ class DepartmentViewSet(viewsets.ModelViewSet):
             'deactivate': 'departments.deactivate',
         }
         required_permission = action_permission_map.get(self.action, 'departments.view')
-        self.permission_classes = [IsAuthenticated, HasPermission(required_permission)]
+        self.permission_classes = [IsAuthenticated, permission_required(required_permission)]
         return super().get_permissions()
 
     def perform_create(self, serializer):
@@ -389,7 +397,7 @@ class DepartmentViewSet(viewsets.ModelViewSet):
 # ---------- Role ViewSet ----------
 class RoleViewSet(viewsets.ModelViewSet):
     queryset = Role.objects.all()
-    permission_classes = [IsAuthenticated, HasPermission('roles.view')]
+    permission_classes = [IsAuthenticated, permission_required('roles.view')]
 
     def get_serializer_class(self):
         if self.action in ['create', 'update', 'partial_update']:
@@ -406,7 +414,7 @@ class RoleViewSet(viewsets.ModelViewSet):
             'deactivate': 'roles.deactivate',
         }
         required_permission = action_permission_map.get(self.action, 'roles.view')
-        self.permission_classes = [IsAuthenticated, HasPermission(required_permission)]
+        self.permission_classes = [IsAuthenticated, permission_required(required_permission)]
         return super().get_permissions()
 
     def perform_create(self, serializer):
@@ -486,4 +494,4 @@ class RoleViewSet(viewsets.ModelViewSet):
 class PermissionViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Permission.objects.filter(is_active=True)
     serializer_class = PermissionSerializer
-    permission_classes = [IsAuthenticated, HasPermission('permissions.view')]
+    permission_classes = [IsAuthenticated, permission_required('permissions.view')]
