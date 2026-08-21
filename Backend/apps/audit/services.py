@@ -22,7 +22,11 @@ def log_event_sync(user_id, username_attempted, action, record_type, record_id,
         after_values=after_values,
         description=reason,
         ip_address=ip_address,
-        session_id=session_id,
+        # AuditLog.session_id is CharField(blank=True) — blank, not null.
+        # Callers (e.g. mixins.py passing request.audit_session, which is
+        # None before a session cookie exists) routinely pass None here;
+        # without this coercion that's an IntegrityError on every insert.
+        session_id=session_id or '',
     )
 
 log_event = log_event_sync
@@ -33,6 +37,10 @@ def log_audit(user_id, username, action_type, module, entity_type='', entity_id=
     AuditLog.objects.create(
         user_id=user_id, username=username, action_type=action_type, module=module,
         entity_type=entity_type, entity_id=entity_id, before_values=before_values,
-        after_values=after_values, ip_address=ip_address, session_id=session_id,
+        after_values=after_values, ip_address=ip_address,
+        # Same NOT NULL vs. blank=True mismatch as log_event_sync above —
+        # LoginView/LogoutView call this without a session_id on almost
+        # every path (login failure, inactive/locked rejection, logout).
+        session_id=session_id or '',
         description=description,
     )

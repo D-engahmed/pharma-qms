@@ -50,7 +50,10 @@ class AuditLog(models.Model):
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     timestamp = models.DateTimeField(auto_now_add=True)
-    user = models.ForeignKey('users.Employee', on_delete=models.CASCADE, null=True, blank=True)
+    # SET_NULL, not CASCADE: an audit trail must survive deletion of the
+    # actor it records. `username` is kept as a point-in-time snapshot
+    # specifically so the row still reads sensibly once `user` is null.
+    user = models.ForeignKey('users.Employee', on_delete=models.SET_NULL, null=True, blank=True)
     username = models.CharField(max_length=100)  # snapshot
     action_type = models.CharField(max_length=50, choices=ACTION_CHOICES)
     module = models.CharField(max_length=50)
