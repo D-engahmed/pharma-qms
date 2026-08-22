@@ -12,7 +12,7 @@ class Migration(migrations.Migration):
 
     operations = [
         migrations.CreateModel(
-            name="UserSession",
+            name="Notification",
             fields=[
                 (
                     "id",
@@ -23,16 +23,15 @@ class Migration(migrations.Migration):
                         serialize=False,
                     ),
                 ),
-                ("session_key", models.CharField(max_length=40, unique=True)),
                 ("created_at", models.DateTimeField(auto_now_add=True)),
-                ("last_activity_at", models.DateTimeField(auto_now=True)),
-                ("expires_at", models.DateTimeField()),
-                ("revoked_at", models.DateTimeField(blank=True, null=True)),
-                ("ip_address", models.GenericIPAddressField(blank=True, null=True)),
-                (
-                    "user_agent",
-                    models.CharField(blank=True, default="", max_length=255),
-                ),
+                ("updated_at", models.DateTimeField(auto_now=True)),
+                ("target_role", models.CharField(max_length=20)),
+                ("title", models.CharField(max_length=100)),
+                ("message", models.TextField()),
+                ("read", models.BooleanField(default=False)),
             ],
+            options={
+                "abstract": False,
+            },
         ),
     ]
