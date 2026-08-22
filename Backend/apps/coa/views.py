@@ -2,6 +2,7 @@ from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.exceptions import ValidationError
 from django.db import transaction
 from apps.common.mixins import AuditMixin
 from apps.users.permissions import permission_required
@@ -16,11 +17,29 @@ class COAViewSet(AuditMixin, viewsets.ModelViewSet):
     serializer_class = COASerializer
     permission_classes = [IsAuthenticated]
 
+    # PROJECT_RULES.md #4/#18: decided COAs must stay immutable. There's no
+    # separate "Locked" status yet (see note below), so Approved/Rejected
+    # double as the locked states for now.
+    FINALIZED_STATUSES = {'Approved', 'Rejected'}
+
     def get_permissions(self):
         if self.action in ['list', 'retrieve']:
             self.permission_classes = [IsAuthenticated, permission_required('certificate.view')]
         elif self.action == 'create':
             self.permission_classes = [IsAuthenticated, permission_required('certificate.create')]
+        elif self.action in ['update', 'partial_update']:
+            # Editing a draft is part of authoring it — reuse certificate.create
+            # rather than inventing a certificate.edit code, since that's the
+            # permission qc_analyst already holds (seed_initial_data.py) and no
+            # role has ever been granted anything narrower.
+            self.permission_classes = [IsAuthenticated, permission_required('certificate.create')]
+        elif self.action == 'destroy':
+            # NEW permission code — not yet in seed_initial_data.py's
+            # permissions_data list or any role's permission list. Add
+            # ('certificate.delete', 'Delete Certificate', 'certificate')
+            # and grant it deliberately (probably sysadmin only) before this
+            # action is reachable by anyone.
+            self.permission_classes = [IsAuthenticated, permission_required('certificate.delete')]
         elif self.action == 'submit':
             self.permission_classes = [IsAuthenticated, permission_required('certificate.submit_for_review')]
         elif self.action == 'complete':
@@ -30,6 +49,28 @@ class COAViewSet(AuditMixin, viewsets.ModelViewSet):
         else:
             self.permission_classes = [IsAuthenticated, permission_required('certificate.view')]
         return super().get_permissions()
+
+    # ---------- Immutability guards ----------
+    # get_permissions() above only checks *who* may call update/destroy.
+    # These check *when* it's still allowed at all, regardless of who's
+    # asking. Previously missing entirely: an Approved or Rejected COA could
+    # be edited or deleted by anyone holding certificate.view, because
+    # update/partial_update/destroy fell through to the view-only branch.
+
+    def perform_update(self, serializer):
+        if serializer.instance.status in self.FINALIZED_STATUSES:
+            raise ValidationError(
+                f"Cannot modify a COA that has been {serializer.instance.status.lower()}."
+            )
+        super().perform_update(serializer)
+
+    def perform_destroy(self, instance):
+        if instance.status != 'Draft':
+            raise ValidationError(
+                "Only Draft COAs can be deleted. "
+                f"'{instance.status}' certificates are quality records — reject them, don't remove them."
+            )
+        super().perform_destroy(instance)
 
     @action(detail=True, methods=['post'])
     def submit(self, request, pk=None):

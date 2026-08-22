@@ -26,7 +26,7 @@ class AuditMixin:
                     changes[field.name] = [old_val, new_val]
         log_event(
             user_id=user.id if user.is_authenticated else None,
-            username_attempted=user.email
+            username_attempted=user.email,
             action=action,
             record_type=instance.__class__.__name__,
             record_id=getattr(instance, 'id', str(instance)),
