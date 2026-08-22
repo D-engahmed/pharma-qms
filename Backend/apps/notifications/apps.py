@@ -1,5 +1,5 @@
 from django.apps import AppConfig
-
-class PackagingConfig(AppConfig):
+class NotificationsConfig(AppConfig):
     default_auto_field = 'django.db.models.BigAutoField'
-    name = 'apps.packaging'
+    name = 'apps.notifications'
+    

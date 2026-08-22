@@ -1,12 +1,5 @@
-from django.urls import path, include
 from rest_framework.routers import DefaultRouter
-from .views import AnalysisViewSet, TestResultViewSet, OOSReportViewSet
-
+from .views import AnalysisViewSet
 router = DefaultRouter()
-router.register(r'analyses', AnalysisViewSet)
-router.register(r'test-results', TestResultViewSet)
-router.register(r'oos-reports', OOSReportViewSet)
-
-urlpatterns = [
-    path('', include(router.urls)),
-]
+router.register(r'analyses', AnalysisViewSet, basename='analysis')
+urlpatterns = router.urls

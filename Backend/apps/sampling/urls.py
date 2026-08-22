@@ -1,11 +1,5 @@
-from django.urls import path, include
 from rest_framework.routers import DefaultRouter
-from .views import SamplingRequestViewSet, SampleViewSet
-
+from .views import SampleViewSet
 router = DefaultRouter()
-router.register(r'requests', SamplingRequestViewSet)
-router.register(r'samples', SampleViewSet)
-
-urlpatterns = [
-    path('', include(router.urls)),
-]
+router.register(r'samples', SampleViewSet, basename='sample')
+urlpatterns = router.urls

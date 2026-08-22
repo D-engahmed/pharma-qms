@@ -1,10 +1,6 @@
-from django.utils import timezone
 from apps.audit.services import log_audit
 
-
 class AuditMixin:
-    """Mixin to add audit logging to viewsets"""
-    
     def perform_create(self, serializer):
         instance = serializer.save()
         self._log_audit('CREATE', instance)
@@ -21,7 +17,6 @@ class AuditMixin:
     def _log_audit(self, action, instance, old=None):
         user = self.request.user
         changes = None
-        
         if old:
             changes = {}
             for field in old._meta.fields:
@@ -45,7 +40,6 @@ class AuditMixin:
         )
     
     def _get_instance_data(self, instance):
-        """Get instance data for audit logging"""
         data = {}
         for field in instance._meta.fields:
             val = getattr(instance, field.name)

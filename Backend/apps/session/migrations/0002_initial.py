@@ -10,17 +10,17 @@ class Migration(migrations.Migration):
     initial = True
 
     dependencies = [
-        ("esignature", "0001_initial"),
+        ("session", "0001_initial"),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
     ]
 
     operations = [
         migrations.AddField(
-            model_name="electronicsignature",
-            name="signer",
+            model_name="usersession",
+            name="user",
             field=models.ForeignKey(
-                on_delete=django.db.models.deletion.PROTECT,
-                related_name="esignatures",
+                on_delete=django.db.models.deletion.CASCADE,
+                related_name="sessions",
                 to=settings.AUTH_USER_MODEL,
             ),
         ),

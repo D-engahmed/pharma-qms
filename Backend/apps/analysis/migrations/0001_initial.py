@@ -12,7 +12,7 @@ class Migration(migrations.Migration):
 
     operations = [
         migrations.CreateModel(
-            name="ElectronicSignature",
+            name="Analysis",
             fields=[
                 (
                     "id",
@@ -23,24 +23,27 @@ class Migration(migrations.Migration):
                         serialize=False,
                     ),
                 ),
-                ("timestamp", models.DateTimeField(auto_now_add=True)),
-                ("signer_printed_name", models.CharField(max_length=100)),
+                ("created_at", models.DateTimeField(auto_now_add=True)),
+                ("updated_at", models.DateTimeField(auto_now=True)),
                 (
-                    "meaning",
+                    "status",
                     models.CharField(
                         choices=[
-                            ("approved", "Approved"),
-                            ("rejected", "Rejected"),
-                            ("reviewed", "Reviewed"),
-                            ("completed", "Completed"),
-                            ("released", "Released"),
+                            ("PENDING", "Pending"),
+                            ("IN_PROGRESS", "In Progress"),
+                            ("COMPLETED", "Completed"),
+                            ("APPROVED", "Approved"),
+                            ("REJECTED", "Rejected"),
                         ],
+                        default="PENDING",
                         max_length=20,
                     ),
                 ),
-                ("record_type", models.CharField(max_length=50)),
-                ("record_id", models.CharField(max_length=50)),
-                ("comment", models.TextField(blank=True, default="")),
+                ("completed_at", models.DateTimeField(blank=True, null=True)),
+                ("notes", models.TextField(blank=True, default="")),
             ],
+            options={
+                "abstract": False,
+            },
         ),
     ]

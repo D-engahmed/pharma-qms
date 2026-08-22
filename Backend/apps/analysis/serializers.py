@@ -1,8 +1,8 @@
 from rest_framework import serializers
-from .models import ProductSample
+from .models import Analysis
 
-class ProductSampleSerializer(serializers.ModelSerializer):
+class AnalysisSerializer(serializers.ModelSerializer):
     class Meta:
-        model = ProductSample
+        model = Analysis
         fields = '__all__'
         read_only_fields = ['id', 'created_at', 'updated_at']
