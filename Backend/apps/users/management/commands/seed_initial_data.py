@@ -10,17 +10,17 @@ class Command(BaseCommand):
         wh_dept, _ = Department.objects.get_or_create(code='WH', defaults={'name': 'Warehouse'})
         admin_dept, _ = Department.objects.get_or_create(code='ADMIN', defaults={'name': 'Administration'})
         
-        # Permissions
+        # Permissions (Added missing ones like certificate.review, users.activate, etc.)
         perms = [
-            'users.view', 'users.create', 'users.edit', 'users.deactivate',
-            'departments.view', 'departments.create', 'departments.edit',
-            'roles.view', 'roles.create', 'roles.edit',
+            'users.view', 'users.create', 'users.edit', 'users.deactivate', 'users.activate',
+            'departments.view', 'departments.create', 'departments.edit', 'departments.activate', 'departments.deactivate',
+            'roles.view', 'roles.create', 'roles.edit', 'roles.activate', 'roles.deactivate',
             'permissions.view',
-            'receiving.view', 'receiving.create', 'receiving.edit', 'receiving.request_sampling',
+            'receiving.view', 'receiving.create', 'receiving.edit', 'receiving.delete', 'receiving.request_sampling',
             'sampling.view', 'sampling.create', 'sampling.complete',
             'analysis.view', 'analysis.start', 'analysis.submit_results',
             'review.approve', 'review.reject',
-            'certificate.view', 'certificate.create', 'certificate.submit_for_review', 'certificate.approve', 'certificate.reject', 'certificate.lock',
+            'certificate.view', 'certificate.create', 'certificate.submit_for_review', 'certificate.review', 'certificate.approve', 'certificate.reject', 'certificate.lock',
             'material.release',
             'audit.view'
         ]
@@ -40,19 +40,23 @@ class Command(BaseCommand):
             RolePermission.objects.get_or_create(role=admin_role, permission=p)
         
         # Storekeeper perms
-        for p in ['receiving.view', 'receiving.create', 'receiving.edit', 'receiving.request_sampling', 'sampling.view', 'certificate.view', 'audit.view']:
+        storekeeper_perms = ['receiving.view', 'receiving.create', 'receiving.edit', 'receiving.request_sampling', 'sampling.view', 'certificate.view', 'audit.view']
+        for p in storekeeper_perms:
             RolePermission.objects.get_or_create(role=storekeeper_role, permission=Permission.objects.get(code=p))
             
         # Sampler perms
-        for p in ['sampling.view', 'sampling.create', 'sampling.complete', 'receiving.view', 'audit.view']:
+        sampler_perms = ['sampling.view', 'sampling.create', 'sampling.complete', 'receiving.view', 'audit.view']
+        for p in sampler_perms:
             RolePermission.objects.get_or_create(role=sampler_role, permission=Permission.objects.get(code=p))
             
         # Analyst perms
-        for p in ['analysis.view', 'analysis.start', 'analysis.submit_results', 'sampling.view', 'certificate.view', 'certificate.create', 'certificate.submit_for_review', 'audit.view']:
+        analyst_perms = ['analysis.view', 'analysis.start', 'analysis.submit_results', 'sampling.view', 'certificate.view', 'certificate.create', 'certificate.submit_for_review', 'audit.view']
+        for p in analyst_perms:
             RolePermission.objects.get_or_create(role=analyst_role, permission=Permission.objects.get(code=p))
             
         # Supervisor perms
-        for p in ['review.approve', 'review.reject', 'certificate.view', 'certificate.review', 'certificate.approve', 'certificate.reject', 'certificate.lock', 'material.release', 'analysis.view', 'sampling.view', 'receiving.view', 'audit.view']:
+        supervisor_perms = ['review.approve', 'review.reject', 'certificate.view', 'certificate.review', 'certificate.approve', 'certificate.reject', 'certificate.lock', 'material.release', 'analysis.view', 'sampling.view', 'receiving.view', 'audit.view']
+        for p in supervisor_perms:
             RolePermission.objects.get_or_create(role=supervisor_role, permission=Permission.objects.get(code=p))
         
         # Users
@@ -68,31 +72,35 @@ class Command(BaseCommand):
             admin.save()
             
         if not Employee.objects.filter(email='storekeeper@pharma.com').exists():
-            Employee.objects.create_user(
+            user = Employee.objects.create_user(
                 email='storekeeper@pharma.com', password='Store@123456',
                 employee_number='EMP002', first_name='John', last_name='Store',
                 job_title='Storekeeper', department=wh_dept
-            ).roles.add(storekeeper_role)
+            )
+            user.roles.add(storekeeper_role)
             
         if not Employee.objects.filter(email='sampler@pharma.com').exists():
-            Employee.objects.create_user(
+            user = Employee.objects.create_user(
                 email='sampler@pharma.com', password='Sample@123456',
                 employee_number='EMP003', first_name='Sarah', last_name='Sampler',
                 job_title='Sampler', department=qc_dept
-            ).roles.add(sampler_role)
+            )
+            user.roles.add(sampler_role)
             
         if not Employee.objects.filter(email='analyst@pharma.com').exists():
-            Employee.objects.create_user(
+            user = Employee.objects.create_user(
                 email='analyst@pharma.com', password='Analyst@123456',
                 employee_number='EMP004', first_name='Alex', last_name='Analyst',
                 job_title='Analyst', department=qc_dept
-            ).roles.add(analyst_role)
+            )
+            user.roles.add(analyst_role)
             
         if not Employee.objects.filter(email='supervisor@pharma.com').exists():
-            Employee.objects.create_user(
+            user = Employee.objects.create_user(
                 email='supervisor@pharma.com', password='Super@123456',
                 employee_number='EMP005', first_name='Sam', last_name='Supervisor',
                 job_title='Supervisor', department=qc_dept
-            ).roles.add(supervisor_role)
+            )
+            user.roles.add(supervisor_role)
             
         self.stdout.write(self.style.SUCCESS('Data seeded successfully!'))
